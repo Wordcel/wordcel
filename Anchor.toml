@@ -1,0 +1,13 @@
+[programs.localnet]
+wordcel = "v4enuof3drNvU2Y3b5m7K62hMq3QUP6qQSV2jjxAhkp"
+
+[registry]
+url = "https://anchor.projectserum.com"
+
+[provider]
+cluster = "localnet"
+wallet = "/Users/abishek/.config/solana/id.json"
+
+[scripts]
+test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+cli = "yarn run ts-node --experimental-top-level-await -P ./tsconfig.json scripts/cli.ts"
