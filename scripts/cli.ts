@@ -82,8 +82,17 @@ async function createPost(publicationAccount, nonce, postFile) {
     return postAccount;
 };
 
-async function updatePost() {
+async function updatePost(publicationAccount, postAccount, postFile) {
+    const metadataUri = await uploadArweave(postFile);
     console.log("Updating post");
+    await program.rpc.updatePost(metadataUri, {
+        accounts: {
+            post: postAccount,
+            publication: publicationAccount,
+            authority: provider.wallet.publicKey,
+            systemProgram: SystemProgram.programId,
+        }
+    });
 };
 
 async function getPosts(publicationAccount) {
@@ -99,15 +108,15 @@ async function getPosts(publicationAccount) {
 }
 
 (async () => {
-    const [publicationAccount, publicationBump] = await anchor.web3.PublicKey.findProgramAddress(publicationSeeds, program.programId);
-    await createPublication(publicationAccount, publicationBump);
-    const publication = await program.account.publication.fetch(publicationAccount);
-
+    const [publicationAccount, _publicationBump] = await anchor.web3.PublicKey.findProgramAddress(publicationSeeds, program.programId);
+    // await createPublication(publicationAccount, publicationBump);
+    // const publication = await program.account.publication.fetch(publicationAccount);
+    const metadataUri = 'data/accounts_2.json';
     // const posts = await getPosts(publicationAccount);
     // console.log(posts);
 
-    const metadataUri = 'data/gm.json';
-    const postAccount = await createPost(publicationAccount, publication.postNonce, metadataUri);
-    console.log(postAccount.toString());
-    // await updatePost();
+    // const postAccount = await createPost(publicationAccount, publication.postNonce, metadataUri);
+    // console.log(postAccount.toString());
+    const postAccount = "DH1d7z1qYdgm7TwTPWE6FBKNTHzi4GKX3z6MmEpzuc2m"
+    await updatePost(publicationAccount, postAccount, metadataUri);
 })();
