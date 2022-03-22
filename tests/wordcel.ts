@@ -184,4 +184,33 @@ describe('wordcel', async () => {
             expect(error).to.be.an('error');
         }
     });
+
+    it("should allow authorized unsubscription", async () => {
+        expect(oneTrueFan).to.not.equal(undefined);
+        const oneTrueFanData = await program.account.subscriber.fetch(oneTrueFan);
+        const subscriptionSeeds = [Buffer.from("subscription"), oneTrueFan.toBuffer(), new anchor.BN(oneTrueFanData.subscriptionNonce).toArrayLike(Buffer)];
+        const [subscriptionAccount, subscriptionBump] = await anchor.web3.PublicKey.findProgramAddress(subscriptionSeeds, program.programId);
+        await program.rpc.initializeSubscription(subscriptionBump, {
+            accounts: {
+                subscription: subscriptionAccount,
+                subscriber: oneTrueFan,
+                publication: publicationAccount,
+                authority: provider.wallet.publicKey,
+                systemProgram: SystemProgram.programId
+            }
+        });
+        await program.rpc.cancelSubscription({
+            accounts: {
+                subscription: subscriptionAccount,
+                subscriber: oneTrueFan,
+                authority: provider.wallet.publicKey,
+                systemProgram: SystemProgram.programId
+            }
+        });
+        try {
+            await program.account.subscription.fetch(subscriptionAccount);
+        } catch (error) {
+            expect(error.toString()).to.contain('Error: Account does not exist');
+        }
+    });
 });

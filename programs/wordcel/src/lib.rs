@@ -144,7 +144,6 @@ pub struct Post {
     pub bump: u8,
     pub publication: Pubkey,
     pub metadata_uri: String,
-    // pub merkle_proof: u32,
 }
 
 #[account]
