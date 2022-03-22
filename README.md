@@ -3,7 +3,7 @@
 Core Protocol
 
 
-Users can
+## Users can
 
 1. Create a publication
 2. Create a post in a publication
