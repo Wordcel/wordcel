@@ -2,6 +2,8 @@ import * as anchor from '@project-serum/anchor';
 import {Program} from '@project-serum/anchor';
 import {Wordcel} from '../target/types/wordcel';
 import {expect} from 'chai';
+import {PublicKey} from '@solana/web3.js';
+import randombytes from 'randombytes';
 
 const {SystemProgram} = anchor.web3;
 
@@ -14,27 +16,28 @@ describe('wordcel', async () => {
     const program = anchor.workspace.Wordcel as Program<Wordcel>;
     const user = provider.wallet;
     // const user = anchor.web3.Keypair.generate();
-    const publicationSeeds = [Buffer.from("publication"), user.publicKey.toBuffer()];
+    const randomHash = randombytes(32);
+    const publicationSeeds = [Buffer.from("publication"), randomHash];
     const [publicationAccount, publicationBump] = await anchor.web3.PublicKey.findProgramAddress(publicationSeeds, program.programId);
-    let oneTrueFan;
+    let oneTrueFan: PublicKey;
+    let onePostAccount: PublicKey;
 
     it("should initialize", async () => {
-        await program.rpc.initialize(publicationBump, {
+        await program.rpc.initialize(publicationBump, randomHash, {
             accounts: {
                 publication: publicationAccount,
                 user: provider.wallet.publicKey,
                 systemProgram: SystemProgram.programId,
             }
         });
-        const account = await program.account.publication.fetch(publicationAccount);
-        expect(account.postNonce).to.equal(0);
     });
 
     it("should create a new post", async () => {
-        const postSeeds = [Buffer.from("post"), publicationAccount.toBuffer(), new anchor.BN(0).toArrayLike(Buffer)];
+        const randomHash = randombytes(32);
+        const postSeeds = [Buffer.from("post"), randomHash];
         const [postAccount, postBump] = await anchor.web3.PublicKey.findProgramAddress(postSeeds, program.programId);
         const metadataUri = "https://gist.githubusercontent.com/abishekk92/10593977/raw/589238c3d48e654347d6cbc1e29c1e10dadc7cea/monoid.md";
-        await program.rpc.createPost(postBump, metadataUri, {
+        await program.rpc.createPost(postBump, metadataUri, randomHash, {
             accounts: {
                 post: postAccount,
                 publication: publicationAccount,
@@ -42,54 +45,23 @@ describe('wordcel', async () => {
                 systemProgram: SystemProgram.programId,
             }
         });
-        const publication = await program.account.publication.fetch(publicationAccount);
-        expect(publication.postNonce).to.equal(1);
         const post = await program.account.post.fetch(postAccount);
         expect(post.metadataUri).to.equal(metadataUri);
+        onePostAccount = postAccount;
     });
 
     it("should update post", async () => {
-        const postSeeds = [Buffer.from("post"), publicationAccount.toBuffer(), new anchor.BN(0).toArrayLike(Buffer)];
-        const [postAccount, _] = await anchor.web3.PublicKey.findProgramAddress(postSeeds, program.programId);
         const metadataUri = "https://gist.githubusercontent.com/shekdev/10593977/raw/589238c3d48e654347d6cbc1e29c1e10dadc7cea/monoid.md";
         await program.rpc.updatePost(metadataUri, {
             accounts: {
-                post: postAccount,
+                post: onePostAccount,
                 publication: publicationAccount,
                 authority: provider.wallet.publicKey,
                 systemProgram: SystemProgram.programId,
             }
         });
-        const post = await program.account.post.fetch(postAccount);
+        const post = await program.account.post.fetch(onePostAccount);
         expect(post.metadataUri).to.equal(metadataUri);
-    });
-
-    it("should pick up the next postNonce", async () => {
-        const postSeeds = [Buffer.from("post"), publicationAccount.toBuffer(), new anchor.BN(1).toArrayLike(Buffer)];
-        const [postAccount, postBump] = await anchor.web3.PublicKey.findProgramAddress(postSeeds, program.programId);
-        const metadataUri = "https://gist.githubusercontent.com/shekdev/10593977/raw/589238c3d48e654347d6cbc1e29c1e10dadc7cea/monoid.md";
-        await program.rpc.createPost(postBump, metadataUri, {
-            accounts: {
-                post: postAccount,
-                publication: publicationAccount,
-                authority: provider.wallet.publicKey,
-                systemProgram: SystemProgram.programId,
-            }
-        });
-        const publication = await program.account.publication.fetch(publicationAccount);
-        expect(publication.postNonce).to.equal(2);
-    });
-
-    it("should get all accounts up to the current postNonce", async () => {
-        const publication = await program.account.publication.fetch(publicationAccount);
-        let posts = []
-        for (let index = 0; index < publication.postNonce; index++) {
-            const postSeeds = [Buffer.from("post"), publicationAccount.toBuffer(), new anchor.BN(publication[index]).toArrayLike(Buffer)];
-            const [postAccount, _] = await anchor.web3.PublicKey.findProgramAddress(postSeeds, program.programId);
-            const post = await program.account.post.fetch(postAccount);
-            posts.push(post);
-        }
-        expect(publication.postNonce).to.equal(posts.length);
     });
 
     it("should create a subscriber", async () => {

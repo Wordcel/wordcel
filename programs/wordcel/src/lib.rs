@@ -6,10 +6,13 @@ declare_id!("v4enuof3drNvU2Y3b5m7K62hMq3QUP6qQSV2jjxAhkp");
 pub mod wordcel {
     use super::*;
 
-    pub fn initialize(ctx: Context<Initialize>, publication_bump: u8) -> ProgramResult {
+    pub fn initialize(
+        ctx: Context<Initialize>,
+        publication_bump: u8,
+        _random_hash: [u8; 32],
+    ) -> ProgramResult {
         let publication = &mut ctx.accounts.publication;
         publication.bump = publication_bump;
-        publication.post_nonce = 0;
         publication.authority = *ctx.accounts.user.to_account_info().key;
         Ok(())
     }
@@ -18,13 +21,12 @@ pub mod wordcel {
         ctx: Context<CreatePost>,
         post_bump: u8,
         metadata_uri: String,
+        _random_hash: [u8; 32],
     ) -> ProgramResult {
         let post = &mut ctx.accounts.post;
         post.bump = post_bump;
         post.metadata_uri = metadata_uri;
         post.publication = *ctx.accounts.publication.to_account_info().key;
-        let publication = &mut ctx.accounts.publication;
-        publication.post_nonce += 1;
         Ok(())
     }
 
@@ -63,9 +65,9 @@ pub mod wordcel {
 }
 
 #[derive(Accounts)]
-#[instruction(publication_bump: u8)]
+#[instruction(publication_bump: u8, random_hash: [u8;32])]
 pub struct Initialize<'info> {
-    #[account(init, seeds=[b"publication".as_ref(), user.key().as_ref()],bump=publication_bump, payer=user)]
+    #[account(init, seeds=[b"publication".as_ref(), &random_hash],bump=publication_bump, payer=user)]
     pub publication: Account<'info, Publication>,
     #[account(mut)]
     pub user: Signer<'info>,
@@ -73,11 +75,11 @@ pub struct Initialize<'info> {
 }
 
 #[derive(Accounts)]
-#[instruction(post_bump: u8, metadata_uri: String)]
+#[instruction(post_bump: u8, metadata_uri: String, random_hash: [u8;32])]
 pub struct CreatePost<'info> {
     #[account(mut, has_one=authority)]
     pub publication: Account<'info, Publication>,
-    #[account(init, seeds=[b"post".as_ref(), publication.key().as_ref(), &[publication.post_nonce as u8].as_ref()], bump=post_bump, payer=authority, space=256)]
+    #[account(init, seeds=[b"post".as_ref(), &random_hash], bump=post_bump, payer=authority, space=256)]
     pub post: Account<'info, Post>,
     pub authority: Signer<'info>,
     pub system_program: Program<'info, System>,
@@ -110,8 +112,6 @@ pub struct InitializeSubscriber<'info> {
 pub struct InitializeSubscription<'info> {
     #[account(mut, has_one=authority)]
     pub subscriber: Account<'info, Subscriber>,
-    // Should publication be part of the seed? Are there any security implications?
-    // So far only the subscriber cancel the subscription and they need to know the subscription account.
     #[account(init, seeds=[b"subscription".as_ref(), subscriber.key().as_ref(), &[subscriber.subscription_nonce as u8].as_ref()], bump=subscription_bump, payer=authority)]
     pub subscription: Account<'info, Subscription>,
     pub publication: Account<'info, Publication>,
@@ -135,7 +135,6 @@ pub struct CancelSubscription<'info> {
 pub struct Publication {
     pub bump: u8,
     pub authority: Pubkey,
-    pub post_nonce: u8,
 }
 
 #[account]
