@@ -94,11 +94,9 @@ pub struct CreatePost<'info> {
 pub struct UpdatePost<'info> {
     #[account(mut, has_one=authority, seeds=[b"publication".as_ref(), &publication.random_hash], bump=publication.bump)]
     // Checks if the original publication was supplied and if the publication authority is the signer
-    // What happens if they change the publication to a publication owned by the user.
     publication: Account<'info, Publication>,
     #[account(mut, has_one=publication, seeds=[b"post".as_ref(), &post.random_hash], bump=post.bump,)]
     // Checks if a post was supplied and it is part of the supplied publication.
-    // What happens if they replace the post account with another post in the same publication
     post: Account<'info, Post>,
     #[account(mut)]
     authority: Signer<'info>,
