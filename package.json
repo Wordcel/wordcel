@@ -1,7 +1,7 @@
 {
     "dependencies": {
         "@bundlr-network/client": "^0.5.12",
-        "@project-serum/anchor": "^0.20.1",
+        "@project-serum/anchor": "^0.24.2",
         "arweave": "^1.10.18",
         "randombytes": "^2.1.0"
     },
