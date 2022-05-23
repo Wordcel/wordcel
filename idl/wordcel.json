@@ -1,0 +1,291 @@
+{
+    "version": "0.1.1",
+    "name": "wordcel",
+    "instructions": [
+        {
+            "name": "initialize",
+            "accounts": [
+                {
+                    "name": "publication",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "user",
+                    "isMut": true,
+                    "isSigner": true
+                },
+                {
+                    "name": "systemProgram",
+                    "isMut": false,
+                    "isSigner": false
+                }
+            ],
+            "args": [
+                {
+                    "name": "randomHash",
+                    "type": {
+                        "array": [
+                            "u8",
+                            32
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "createPost",
+            "accounts": [
+                {
+                    "name": "publication",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "post",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "authority",
+                    "isMut": true,
+                    "isSigner": true
+                },
+                {
+                    "name": "systemProgram",
+                    "isMut": false,
+                    "isSigner": false
+                }
+            ],
+            "args": [
+                {
+                    "name": "metadataUri",
+                    "type": "string"
+                },
+                {
+                    "name": "randomHash",
+                    "type": {
+                        "array": [
+                            "u8",
+                            32
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "updatePost",
+            "accounts": [
+                {
+                    "name": "publication",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "post",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "authority",
+                    "isMut": true,
+                    "isSigner": true
+                },
+                {
+                    "name": "systemProgram",
+                    "isMut": false,
+                    "isSigner": false
+                }
+            ],
+            "args": [
+                {
+                    "name": "metadataUri",
+                    "type": "string"
+                }
+            ]
+        },
+        {
+            "name": "initializeSubscriber",
+            "accounts": [
+                {
+                    "name": "subscriber",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "user",
+                    "isMut": true,
+                    "isSigner": true
+                },
+                {
+                    "name": "systemProgram",
+                    "isMut": false,
+                    "isSigner": false
+                }
+            ],
+            "args": []
+        },
+        {
+            "name": "initializeSubscription",
+            "accounts": [
+                {
+                    "name": "subscriber",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "subscription",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "publication",
+                    "isMut": false,
+                    "isSigner": false
+                },
+                {
+                    "name": "authority",
+                    "isMut": true,
+                    "isSigner": true
+                },
+                {
+                    "name": "systemProgram",
+                    "isMut": false,
+                    "isSigner": false
+                }
+            ],
+            "args": []
+        },
+        {
+            "name": "cancelSubscription",
+            "accounts": [
+                {
+                    "name": "subscriber",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "subscription",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "authority",
+                    "isMut": false,
+                    "isSigner": true
+                },
+                {
+                    "name": "systemProgram",
+                    "isMut": false,
+                    "isSigner": false
+                }
+            ],
+            "args": []
+        }
+    ],
+    "accounts": [
+        {
+            "name": "Publication",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "authority",
+                        "type": "publicKey"
+                    },
+                    {
+                        "name": "bump",
+                        "type": "u8"
+                    },
+                    {
+                        "name": "randomHash",
+                        "type": {
+                            "array": [
+                                "u8",
+                                32
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "Post",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "publication",
+                        "type": "publicKey"
+                    },
+                    {
+                        "name": "metadataUri",
+                        "type": "string"
+                    },
+                    {
+                        "name": "bump",
+                        "type": "u8"
+                    },
+                    {
+                        "name": "randomHash",
+                        "type": {
+                            "array": [
+                                "u8",
+                                32
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "Subscriber",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "authority",
+                        "type": "publicKey"
+                    },
+                    {
+                        "name": "subscriptionNonce",
+                        "type": "u8"
+                    },
+                    {
+                        "name": "bump",
+                        "type": "u8"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "Subscription",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "publication",
+                        "type": "publicKey"
+                    },
+                    {
+                        "name": "subscriber",
+                        "type": "publicKey"
+                    },
+                    {
+                        "name": "bump",
+                        "type": "u8"
+                    }
+                ]
+            }
+        }
+    ],
+    "errors": [
+        {
+            "code": 6000,
+            "name": "URITooLarge"
+        }
+    ],
+    "metadata": {
+        "address": "D9JJgeRf2rKq5LNMHLBMb92g4ZpeMgCyvZkd7QKwSCzg"
+    }
+}
