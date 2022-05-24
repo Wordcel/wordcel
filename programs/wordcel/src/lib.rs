@@ -44,6 +44,24 @@ pub mod wordcel {
         Ok(())
     }
 
+    pub fn comment(
+        ctx: Context<Comment>,
+        metadata_uri: String,
+        random_hash: [u8; 32],
+    ) -> Result<()> {
+        if metadata_uri.len() > MAX_LEN_URI {
+            return Err(error!(PostError::URITooLarge));
+        }
+
+        let post = &mut ctx.accounts.post;
+        post.random_hash = random_hash;
+        post.bump = *ctx.bumps.get("post").unwrap();
+        post.metadata_uri = metadata_uri;
+        post.reply_to = Some(*ctx.accounts.reply_to.to_account_info().key);
+        post.publication = *ctx.accounts.publication.to_account_info().key;
+        Ok(())
+    }
+
     pub fn initialize_subscriber(ctx: Context<InitializeSubscriber>) -> Result<()> {
         let subscriber = &mut ctx.accounts.subscriber;
         subscriber.bump = *ctx.bumps.get("subscriber").unwrap();
@@ -104,6 +122,20 @@ pub struct UpdatePost<'info> {
 }
 
 #[derive(Accounts)]
+#[instruction(metadata_uri: String, random_hash: [u8;32])]
+pub struct Comment<'info> {
+    #[account(mut, has_one=authority, seeds=[b"publication".as_ref(), &publication.random_hash], bump=publication.bump)]
+    // Checks if a publication was supplied and if the publication authority is the signer
+    publication: Account<'info, Publication>,
+    #[account(init, seeds=[b"post".as_ref(), &random_hash, reply_to.key().as_ref()], bump, payer=authority, space=Post::LEN)]
+    post: Account<'info, Post>,
+    reply_to: Account<'info, Post>,
+    #[account(mut)]
+    authority: Signer<'info>,
+    system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
 pub struct InitializeSubscriber<'info> {
     #[account(init, seeds=[b"subscriber".as_ref(), user.key().as_ref()],bump, payer=user, space = Subscriber::LEN)]
     subscriber: Account<'info, Subscriber>,
@@ -154,11 +186,16 @@ pub struct Post {
     metadata_uri: String,
     bump: u8,
     random_hash: [u8; 32],
+    // namespace: Pubkey, Namespace created per project.
+    reply_to: Option<Pubkey>, //Comments are just replies
+                              // reshare: bool, reshares are retweets or just share
+                              // Reply with reshare is qoute tweet
 }
 
 impl Post {
     const LEN: usize = 8 // Account Discriminator
         + 32 // publication
+        + 32 // reply_to
         + 32 // random_has
         + 1 // bump
         + MAX_LEN_URI;
