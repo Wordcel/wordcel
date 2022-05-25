@@ -14,17 +14,17 @@ describe('wordcel', async () => {
     const program = anchor.workspace.Wordcel as Program<Wordcel>;
     const user = provider.wallet.publicKey;
     const randomHash = randombytes(32);
-    const publicationSeed = [Buffer.from("publication"), randomHash];
-    const [publicationAccount, _] = await anchor.web3.PublicKey.findProgramAddress(publicationSeed, program.programId);
+    const profileSeed = [Buffer.from("profile"), randomHash];
+    const [profileAccount, _] = await anchor.web3.PublicKey.findProgramAddress(profileSeed, program.programId);
     let oneTrueFan: PublicKey;
     let onePostAccount: PublicKey;
 
-    describe("Publication", async () => {
+    describe("Profile", async () => {
         it("should initialize", async () => {
             await program.methods.initialize(randomHash)
-                .accounts({publication: publicationAccount, user: user, systemProgram: SystemProgram.programId})
+                .accounts({profile: profileAccount, user: user, systemProgram: SystemProgram.programId})
                 .rpc();
-            const data = await program.account.publication.fetch(publicationAccount);
+            const data = await program.account.profile.fetch(profileAccount);
             expect(data.authority.toString()).to.equal(user.toString());
         });
     });
@@ -37,7 +37,7 @@ describe('wordcel', async () => {
             const metadataUri = "https://gist.githubusercontent.com/abishekk92/10593977/raw/589238c3d48e654347d6cbc1e29c1e10dadc7cea/monoid.md";
             await program.methods.createPost(metadataUri, randomHash).accounts({
                 post: postAccount,
-                publication: publicationAccount,
+                profile: profileAccount,
                 authority: user,
                 systemProgram: SystemProgram.programId,
             }).rpc();
@@ -50,7 +50,7 @@ describe('wordcel', async () => {
             const metadataUri = "https://gist.githubusercontent.com/shekdev/10593977/raw/589238c3d48e654347d6cbc1e29c1e10dadc7cea/monoid.md";
             await program.methods.updatePost(metadataUri).accounts({
                 post: onePostAccount,
-                publication: publicationAccount,
+                profile: profileAccount,
                 authority: user,
                 systemProgram: SystemProgram.programId,
             }).rpc();
@@ -58,18 +58,18 @@ describe('wordcel', async () => {
             expect(post.metadataUri).to.equal(metadataUri);
         });
 
-        it("should only allow the post to be edited with the original publication", async () => {
+        it("should only allow the post to be edited with the original profile", async () => {
             const randomHash = randombytes(32);
-            const publicationSeed = [Buffer.from("publication"), randomHash];
-            const [newPublicationAccount, _] = await anchor.web3.PublicKey.findProgramAddress(publicationSeed, program.programId);
+            const profileSeed = [Buffer.from("profile"), randomHash];
+            const [newProfileAccount, _] = await anchor.web3.PublicKey.findProgramAddress(profileSeed, program.programId);
             await program.methods.initialize(randomHash)
-                .accounts({publication: newPublicationAccount, user: user, systemProgram: SystemProgram.programId})
+                .accounts({profile: newProfileAccount, user: user, systemProgram: SystemProgram.programId})
                 .rpc();
             const metadataUri = "https://gist.githubusercontent.com/shekdev/10593977/raw/589238c3d48e654347d6cbc1e29c1e10dadc7cea/monoid.md";
             try {
                 await program.methods.updatePost(metadataUri).accounts({
                     post: onePostAccount,
-                    publication: newPublicationAccount,
+                    profile: newProfileAccount,
                     authority: user,
                     systemProgram: SystemProgram.programId,
                 }).rpc();
@@ -80,14 +80,14 @@ describe('wordcel', async () => {
             }
         });
 
-        it("should create a post as a comment", async () => {
+        it("should create a comment", async () => {
             const randomHash = randombytes(32);
             const postSeeds = [Buffer.from("post"), randomHash, onePostAccount.toBuffer()];
             const [postAccount, _] = await anchor.web3.PublicKey.findProgramAddress(postSeeds, program.programId);
             const metadataUri = "https://gist.githubusercontent.com/abishekk92/10593977/raw/589238c3d48e654347d6cbc1e29c1e10dadc7cea/monoid.md";
             await program.methods.comment(metadataUri, randomHash).accounts({
                 post: postAccount,
-                publication: publicationAccount,
+                profile: profileAccount,
                 replyTo: onePostAccount,
                 authority: user,
                 systemProgram: SystemProgram.programId,
@@ -96,6 +96,7 @@ describe('wordcel', async () => {
             expect(post.metadataUri).to.equal(metadataUri);
             onePostAccount = postAccount;
         });
+
     });
 
 
@@ -123,12 +124,12 @@ describe('wordcel', async () => {
             await program.methods.initializeSubscription().accounts({
                 subscription: subscriptionAccount,
                 subscriber: oneTrueFan,
-                publication: publicationAccount,
+                profile: profileAccount,
                 authority: user,
                 systemProgram: SystemProgram.programId
             }).rpc();
             const subscription = await program.account.subscription.fetch(subscriptionAccount);
-            expect(subscription.publication.toString()).to.equal(publicationAccount.toString());
+            expect(subscription.profile.toString()).to.equal(profileAccount.toString());
             const subscriber = await program.account.subscriber.fetch(oneTrueFan);
             expect(subscriber.subscriptionNonce).to.equal(1)
         });
@@ -141,7 +142,7 @@ describe('wordcel', async () => {
             await program.methods.initializeSubscription().accounts({
                 subscription: subscriptionAccount,
                 subscriber: oneTrueFan,
-                publication: publicationAccount,
+                profile: profileAccount,
                 authority: user,
                 systemProgram: SystemProgram.programId
             }).rpc();
@@ -167,7 +168,7 @@ describe('wordcel', async () => {
             await program.methods.initializeSubscription().accounts({
                 subscription: subscriptionAccount,
                 subscriber: oneTrueFan,
-                publication: publicationAccount,
+                profile: profileAccount,
                 authority: user,
                 systemProgram: SystemProgram.programId
             }).rpc();

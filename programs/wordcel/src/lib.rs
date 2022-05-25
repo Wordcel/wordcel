@@ -11,10 +11,10 @@ pub mod wordcel {
     use super::*;
 
     pub fn initialize(ctx: Context<Initialize>, random_hash: [u8; 32]) -> Result<()> {
-        let publication = &mut ctx.accounts.publication;
-        publication.random_hash = random_hash;
-        publication.bump = *ctx.bumps.get("publication").unwrap();
-        publication.authority = *ctx.accounts.user.to_account_info().key;
+        let profile = &mut ctx.accounts.profile;
+        profile.random_hash = random_hash;
+        profile.bump = *ctx.bumps.get("profile").unwrap();
+        profile.authority = *ctx.accounts.user.to_account_info().key;
         Ok(())
     }
 
@@ -31,7 +31,7 @@ pub mod wordcel {
         post.random_hash = random_hash;
         post.bump = *ctx.bumps.get("post").unwrap();
         post.metadata_uri = metadata_uri;
-        post.publication = *ctx.accounts.publication.to_account_info().key;
+        post.profile = *ctx.accounts.profile.to_account_info().key;
         Ok(())
     }
 
@@ -58,7 +58,7 @@ pub mod wordcel {
         post.bump = *ctx.bumps.get("post").unwrap();
         post.metadata_uri = metadata_uri;
         post.reply_to = Some(*ctx.accounts.reply_to.to_account_info().key);
-        post.publication = *ctx.accounts.publication.to_account_info().key;
+        post.profile = *ctx.accounts.profile.to_account_info().key;
         Ok(())
     }
 
@@ -72,7 +72,7 @@ pub mod wordcel {
     pub fn initialize_subscription(ctx: Context<InitializeSubscription>) -> Result<()> {
         let subscription = &mut ctx.accounts.subscription;
         subscription.bump = *ctx.bumps.get("subscription").unwrap();
-        subscription.publication = *ctx.accounts.publication.to_account_info().key;
+        subscription.profile = *ctx.accounts.profile.to_account_info().key;
         subscription.subscriber = *ctx.accounts.subscriber.to_account_info().key;
         let subscriber = &mut ctx.accounts.subscriber;
         subscriber.subscription_nonce += 1;
@@ -87,8 +87,8 @@ pub mod wordcel {
 #[derive(Accounts)]
 #[instruction(random_hash: [u8;32])]
 pub struct Initialize<'info> {
-    #[account(init, seeds=[b"publication".as_ref(), &random_hash], bump, payer=user, space=Publication::LEN)]
-    publication: Account<'info, Publication>,
+    #[account(init, seeds=[b"profile".as_ref(), &random_hash], bump, payer=user, space=Profile::LEN)]
+    profile: Account<'info, Profile>,
     #[account(mut)]
     user: Signer<'info>,
     system_program: Program<'info, System>,
@@ -97,9 +97,9 @@ pub struct Initialize<'info> {
 #[derive(Accounts)]
 #[instruction(metadata_uri: String, random_hash: [u8;32])]
 pub struct CreatePost<'info> {
-    #[account(mut, has_one=authority, seeds=[b"publication".as_ref(), &publication.random_hash], bump=publication.bump)]
-    // Checks if a publication was supplied and if the publication authority is the signer
-    publication: Account<'info, Publication>,
+    #[account(mut, has_one=authority, seeds=[b"profile".as_ref(), &profile.random_hash], bump=profile.bump)]
+    // Checks if a profile was supplied and if the profile authority is the signer
+    profile: Account<'info, Profile>,
     #[account(init, seeds=[b"post".as_ref(), &random_hash], bump, payer=authority, space=Post::LEN)]
     post: Account<'info, Post>,
     #[account(mut)]
@@ -110,11 +110,11 @@ pub struct CreatePost<'info> {
 #[derive(Accounts)]
 #[instruction(metadata_uri: String)]
 pub struct UpdatePost<'info> {
-    #[account(mut, has_one=authority, seeds=[b"publication".as_ref(), &publication.random_hash], bump=publication.bump)]
-    // Checks if the original publication was supplied and if the publication authority is the signer
-    publication: Account<'info, Publication>,
-    #[account(mut, has_one=publication, seeds=[b"post".as_ref(), &post.random_hash], bump=post.bump,)]
-    // Checks if a post was supplied and it is part of the supplied publication.
+    #[account(mut, has_one=authority, seeds=[b"profile".as_ref(), &profile.random_hash], bump=profile.bump)]
+    // Checks if the original profile was supplied and if the profile authority is the signer
+    profile: Account<'info, Profile>,
+    #[account(mut, has_one=profile, seeds=[b"post".as_ref(), &post.random_hash], bump=post.bump,)]
+    // Checks if a post was supplied and it is part of the supplied profile.
     post: Account<'info, Post>,
     #[account(mut)]
     authority: Signer<'info>,
@@ -124,9 +124,9 @@ pub struct UpdatePost<'info> {
 #[derive(Accounts)]
 #[instruction(metadata_uri: String, random_hash: [u8;32])]
 pub struct Comment<'info> {
-    #[account(mut, has_one=authority, seeds=[b"publication".as_ref(), &publication.random_hash], bump=publication.bump)]
-    // Checks if a publication was supplied and if the publication authority is the signer
-    publication: Account<'info, Publication>,
+    #[account(mut, has_one=authority, seeds=[b"profile".as_ref(), &profile.random_hash], bump=profile.bump)]
+    // Checks if a profile was supplied and if the profile authority is the signer
+    profile: Account<'info, Profile>,
     #[account(init, seeds=[b"post".as_ref(), &random_hash, reply_to.key().as_ref()], bump, payer=authority, space=Post::LEN)]
     post: Account<'info, Post>,
     reply_to: Account<'info, Post>,
@@ -151,7 +151,7 @@ pub struct InitializeSubscription<'info> {
     subscriber: Account<'info, Subscriber>,
     #[account(init, seeds=[b"subscription".as_ref(), subscriber.key().as_ref(), &[subscriber.subscription_nonce as u8].as_ref()], bump, payer=authority, space=Subscription::LEN)]
     subscription: Account<'info, Subscription>,
-    publication: Account<'info, Publication>,
+    profile: Account<'info, Profile>,
     #[account(mut)]
     authority: Signer<'info>,
     system_program: Program<'info, System>,
@@ -169,32 +169,33 @@ pub struct CancelSubscription<'info> {
 
 #[account]
 #[derive(Default)]
-pub struct Publication {
+pub struct Profile {
     authority: Pubkey,
     bump: u8,
     random_hash: [u8; 32],
 }
 
-impl Publication {
+impl Profile {
     const LEN: usize = 8 + size_of::<Self>();
 }
 
 #[account]
 #[derive(Default)]
 pub struct Post {
-    publication: Pubkey,
+    profile: Pubkey,
     metadata_uri: String,
     bump: u8,
     random_hash: [u8; 32],
-    // namespace: Pubkey, Namespace created per project.
     reply_to: Option<Pubkey>, //Comments are just replies
-                              // reshare: bool, reshares are retweets or just share
-                              // Reply with reshare is qoute tweet
 }
 
+//Comments just increased the price though, it is kinda dumb that users have to pay the same thing
+// for a long blogpost and a comment.
+// We ideally want more people to comment, what if we create it as an independent account?
+// How do we do this without complicating the datastructure?
 impl Post {
     const LEN: usize = 8 // Account Discriminator
-        + 32 // publication
+        + 32 // profile
         + 32 // reply_to
         + 32 // random_has
         + 1 // bump
@@ -216,7 +217,7 @@ impl Subscriber {
 #[account]
 #[derive(Default)]
 pub struct Subscription {
-    publication: Pubkey,
+    profile: Pubkey,
     subscriber: Pubkey,
     bump: u8,
 }
