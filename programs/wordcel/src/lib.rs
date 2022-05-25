@@ -77,7 +77,7 @@ pub mod wordcel {
         subscription.profile = *ctx.accounts.profile.to_account_info().key;
         subscription.subscriber = *ctx.accounts.subscriber.to_account_info().key;
         let subscriber = &mut ctx.accounts.subscriber;
-        subscriber.subscription_nonce += 1;
+        subscriber.subscription_nonce = subscriber.subscription_nonce.checked_add(1).unwrap();
         Ok(())
     }
 
