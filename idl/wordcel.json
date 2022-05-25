@@ -6,7 +6,7 @@
             "name": "initialize",
             "accounts": [
                 {
-                    "name": "publication",
+                    "name": "profile",
                     "isMut": true,
                     "isSigner": false
                 },
@@ -37,7 +37,7 @@
             "name": "createPost",
             "accounts": [
                 {
-                    "name": "publication",
+                    "name": "profile",
                     "isMut": true,
                     "isSigner": false
                 },
@@ -77,7 +77,7 @@
             "name": "updatePost",
             "accounts": [
                 {
-                    "name": "publication",
+                    "name": "profile",
                     "isMut": true,
                     "isSigner": false
                 },
@@ -101,6 +101,51 @@
                 {
                     "name": "metadataUri",
                     "type": "string"
+                }
+            ]
+        },
+        {
+            "name": "comment",
+            "accounts": [
+                {
+                    "name": "profile",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "post",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "replyTo",
+                    "isMut": false,
+                    "isSigner": false
+                },
+                {
+                    "name": "authority",
+                    "isMut": true,
+                    "isSigner": true
+                },
+                {
+                    "name": "systemProgram",
+                    "isMut": false,
+                    "isSigner": false
+                }
+            ],
+            "args": [
+                {
+                    "name": "metadataUri",
+                    "type": "string"
+                },
+                {
+                    "name": "randomHash",
+                    "type": {
+                        "array": [
+                            "u8",
+                            32
+                        ]
+                    }
                 }
             ]
         },
@@ -139,7 +184,7 @@
                     "isSigner": false
                 },
                 {
-                    "name": "publication",
+                    "name": "profile",
                     "isMut": false,
                     "isSigner": false
                 },
@@ -185,7 +230,7 @@
     ],
     "accounts": [
         {
-            "name": "Publication",
+            "name": "Profile",
             "type": {
                 "kind": "struct",
                 "fields": [
@@ -215,7 +260,7 @@
                 "kind": "struct",
                 "fields": [
                     {
-                        "name": "publication",
+                        "name": "profile",
                         "type": "publicKey"
                     },
                     {
@@ -233,6 +278,12 @@
                                 "u8",
                                 32
                             ]
+                        }
+                    },
+                    {
+                        "name": "replyTo",
+                        "type": {
+                            "option": "publicKey"
                         }
                     }
                 ]
@@ -264,7 +315,7 @@
                 "kind": "struct",
                 "fields": [
                     {
-                        "name": "publication",
+                        "name": "profile",
                         "type": "publicKey"
                     },
                     {
