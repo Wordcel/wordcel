@@ -13,7 +13,7 @@ pub struct Initialize<'info> {
 #[derive(Accounts)]
 #[instruction(metadata_uri: String, random_hash: [u8;32])]
 pub struct CreatePost<'info> {
-    #[account(mut, has_one=authority, seeds=[b"profile".as_ref(), &profile.random_hash], bump=profile.bump)]
+    #[account(has_one=authority, seeds=[b"profile".as_ref(), &profile.random_hash], bump=profile.bump)]
     // Checks if a profile was supplied and if the profile authority is the signer
     pub profile: Account<'info, Profile>,
     #[account(init, seeds=[b"post".as_ref(), &random_hash], bump, payer=authority, space=Post::LEN)]
@@ -26,7 +26,7 @@ pub struct CreatePost<'info> {
 #[derive(Accounts)]
 #[instruction(metadata_uri: String)]
 pub struct UpdatePost<'info> {
-    #[account(mut, has_one=authority, seeds=[b"profile".as_ref(), &profile.random_hash], bump=profile.bump)]
+    #[account(has_one=authority, seeds=[b"profile".as_ref(), &profile.random_hash], bump=profile.bump)]
     // Checks if the original profile was supplied and if the profile authority is the signer
     pub profile: Account<'info, Profile>,
     #[account(mut, has_one=profile, seeds=[b"post".as_ref(), &post.random_hash], bump=post.bump,)]
@@ -40,7 +40,7 @@ pub struct UpdatePost<'info> {
 #[derive(Accounts)]
 #[instruction(metadata_uri: String, random_hash: [u8;32])]
 pub struct Comment<'info> {
-    #[account(mut, has_one=authority, seeds=[b"profile".as_ref(), &profile.random_hash], bump=profile.bump)]
+    #[account(has_one=authority, seeds=[b"profile".as_ref(), &profile.random_hash], bump=profile.bump)]
     // Checks if a profile was supplied and if the profile authority is the signer
     pub profile: Account<'info, Profile>,
     #[account(init, seeds=[b"post".as_ref(), &random_hash, reply_to.key().as_ref()], bump, payer=authority, space=Post::LEN)]
