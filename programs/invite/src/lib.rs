@@ -11,21 +11,20 @@ pub mod invite {
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
         let invite_account = &mut ctx.accounts.invite_account;
         invite_account.bump = *ctx.bumps.get("invite_account").unwrap();
-        invite_account.to_give = Invite::MAX_TO_GIVE;
         invite_account.authority = *ctx.accounts.authority.to_account_info().key;
         Ok(())
     }
 
     pub fn send_invite(ctx: Context<SendInvite>) -> Result<()> {
-        require_gte!(ctx.accounts.invite_account.to_give, 1);
-
+        require!(
+            ctx.accounts.invite_account.referred.len() as usize <= Invite::MAX_TO_GIVE as usize,
+            InviteError::NoInvitesLeft
+        );
         let to_invite_account = &mut ctx.accounts.to_invite_account;
         to_invite_account.bump = *ctx.bumps.get("to_invite_account").unwrap();
-        to_invite_account.to_give = Invite::MAX_TO_GIVE;
         to_invite_account.authority = *ctx.accounts.to.to_account_info().key;
 
         let invite_account = &mut ctx.accounts.invite_account;
-        invite_account.to_give = invite_account.to_give.checked_sub(1).unwrap();
         invite_account
             .referred
             .push(*ctx.accounts.to.to_account_info().key);
@@ -60,7 +59,6 @@ pub struct SendInvite<'info> {
 pub struct Invite {
     authority: Pubkey,
     bump: u8,
-    to_give: u8,
     referred: Vec<Pubkey>,
 }
 
@@ -68,4 +66,9 @@ impl Invite {
     pub const MAX_TO_GIVE: u8 = 2;
     pub const LEN: usize =
         8 + size_of::<Self>() + (Self::MAX_TO_GIVE as usize * size_of::<Pubkey>());
+}
+
+#[error_code]
+pub enum InviteError {
+    NoInvitesLeft,
 }
