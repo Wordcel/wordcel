@@ -63,7 +63,11 @@ describe('wordcel', async () => {
             const profileSeed = [Buffer.from("profile"), randomHash];
             const [newProfileAccount, _] = await anchor.web3.PublicKey.findProgramAddress(profileSeed, program.programId);
             await program.methods.initialize(randomHash)
-                .accounts({profile: newProfileAccount, user: user, systemProgram: SystemProgram.programId})
+                .accounts({
+                    profile: newProfileAccount,
+                    user: user,
+                    systemProgram: SystemProgram.programId
+                })
                 .rpc();
             const metadataUri = "https://gist.githubusercontent.com/shekdev/10593977/raw/589238c3d48e654347d6cbc1e29c1e10dadc7cea/monoid.md";
             try {

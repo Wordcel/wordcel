@@ -26,7 +26,13 @@ async function sendInvite(from_user: Keypair, to: PublicKey, feePayer: PublicKey
     const inviteAccount = await getInviteAccount(from_user.publicKey)
     const toInviteAccount = await getInviteAccount(to)
     const tx = await program.methods.sendInvite()
-        .accounts({inviteAccount: inviteAccount, toInviteAccount: toInviteAccount, to: to, authority: from_user.publicKey, systemProgram: SystemProgram.programId})
+        .accounts({
+            inviteAccount: inviteAccount,
+            toInviteAccount: toInviteAccount,
+            to: to,
+            authority: from_user.publicKey,
+            systemProgram: SystemProgram.programId
+        })
         .transaction();
     tx.feePayer = feePayer;
     tx.recentBlockhash = (await provider.connection.getRecentBlockhash()).blockhash;
@@ -49,7 +55,12 @@ describe('Invitation', async () => {
     it("should initialize", async () => {
 
         await program.methods.initialize()
-            .accounts({inviteAccount: oneInviteAccount, authority: testUser.publicKey, payer: user, systemProgram: SystemProgram.programId})
+            .accounts({
+                inviteAccount: oneInviteAccount,
+                authority: testUser.publicKey,
+                payer: user,
+                systemProgram: SystemProgram.programId
+            })
             .rpc();
         const data = await program.account.invite.fetch(oneInviteAccount);
         expect(data.authority.toString()).to.equal(testUser.publicKey.toString());
@@ -70,7 +81,12 @@ describe('Invitation', async () => {
         await airdrop(newUser.publicKey);
         const inviteAccount = await getInviteAccount(newUser.publicKey);
         await program.methods.initialize()
-            .accounts({inviteAccount: inviteAccount, authority: newUser.publicKey, payer: user, systemProgram: SystemProgram.programId})
+            .accounts({
+                inviteAccount: inviteAccount,
+                authority: newUser.publicKey,
+                payer: user,
+                systemProgram: SystemProgram.programId
+            })
             .rpc();
 
         //First Invite
@@ -96,7 +112,12 @@ describe('Invitation', async () => {
         const seed = [Buffer.from("invite"), randomUser.publicKey.toBuffer()];
         const [account, _] = await anchor.web3.PublicKey.findProgramAddress(seed, program.programId);
         const tx = await program.methods.initialize()
-            .accounts({inviteAccount: account, authority: randomUser.publicKey, payer: testUser.publicKey, systemProgram: SystemProgram.programId})
+            .accounts({
+                inviteAccount: account,
+                authority: randomUser.publicKey,
+                payer: testUser.publicKey,
+                systemProgram: SystemProgram.programId
+            })
             .transaction();
         tx.feePayer = user;
         tx.recentBlockhash = (await provider.connection.getRecentBlockhash()).blockhash;
@@ -114,7 +135,12 @@ describe('Invitation', async () => {
             const seed = [Buffer.from("invite"), randomUser.publicKey.toBuffer()];
             const [account, _] = await anchor.web3.PublicKey.findProgramAddress(seed, program.programId);
             await program.methods.initialize()
-                .accounts({inviteAccount: account, authority: randomUser.publicKey, payer: user, systemProgram: SystemProgram.programId})
+                .accounts({
+                    inviteAccount: account,
+                    authority: randomUser.publicKey,
+                    payer: user,
+                    systemProgram: SystemProgram.programId
+                })
                 .rpc();
             const data = await program.account.invite.fetch(account);
             expect(data.authority.toString()).to.equal(randomUser.publicKey.toString());
