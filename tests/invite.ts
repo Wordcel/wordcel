@@ -2,26 +2,47 @@ import * as anchor from '@project-serum/anchor';
 import {Program} from '@project-serum/anchor';
 import {Invite} from '../target/types/invite';
 import {expect} from 'chai';
-import {LAMPORTS_PER_SOL, PublicKey} from '@solana/web3.js';
+import {Keypair, LAMPORTS_PER_SOL, PublicKey} from '@solana/web3.js';
 
 const {SystemProgram} = anchor.web3;
+const provider = anchor.getProvider();
 
-describe('invite', async () => {
-    const provider = anchor.getProvider();
+const program = anchor.workspace.Invite as Program<Invite>;
+const user = provider.wallet.publicKey;
 
-    const program = anchor.workspace.Invite as Program<Invite>;
-    const user = provider.wallet.publicKey;
 
+async function airdrop(key: PublicKey) {
+    const airdropSig = await provider.connection.requestAirdrop(key, 1 * LAMPORTS_PER_SOL);
+    return provider.connection.confirmTransaction(airdropSig);
+}
+
+async function getInviteAccount(key: PublicKey) {
+    const seed = [Buffer.from("invite"), key.toBuffer()];
+    const [account, _] = await anchor.web3.PublicKey.findProgramAddress(seed, program.programId);
+    return account;
+}
+
+async function sendInvite(from_user: Keypair, to: PublicKey, feePayer: PublicKey) {
+    const inviteAccount = await getInviteAccount(from_user.publicKey)
+    const toInviteAccount = await getInviteAccount(to)
+    const tx = await program.methods.sendInvite()
+        .accounts({inviteAccount: inviteAccount, toInviteAccount: toInviteAccount, to: to, authority: from_user.publicKey, systemProgram: SystemProgram.programId})
+        .transaction();
+    tx.feePayer = feePayer;
+    tx.recentBlockhash = (await provider.connection.getRecentBlockhash()).blockhash;
+    tx.sign(from_user);
+    await provider.sendAndConfirm(tx);
+    return [inviteAccount, toInviteAccount];
+}
+
+describe('Invitation', async () => {
     // Prepare test user.
     const testUser = anchor.web3.Keypair.generate();
-    const inviteSeed = [Buffer.from("invite"), testUser.publicKey.toBuffer()];
     let oneInviteAccount: PublicKey;
 
     before(async () => {
-        const airdropSig = await provider.connection.requestAirdrop(testUser.publicKey, 1 * LAMPORTS_PER_SOL);
-        await provider.connection.confirmTransaction(airdropSig);
-        const [inviteAccount, _] = await anchor.web3.PublicKey.findProgramAddress(inviteSeed, program.programId);
-        oneInviteAccount = inviteAccount;
+        await airdrop(testUser.publicKey);
+        oneInviteAccount = await getInviteAccount(testUser.publicKey);
     });
 
 
@@ -36,19 +57,37 @@ describe('invite', async () => {
 
     it("should send invite to others", async () => {
         const randomUser = anchor.web3.Keypair.generate();
-        const toInviteSeed = [Buffer.from("invite"), randomUser.publicKey.toBuffer()];
-        const [toInviteAccount, _] = await anchor.web3.PublicKey.findProgramAddress(toInviteSeed, program.programId);
-        const tx = await program.methods.sendInvite()
-            .accounts({inviteAccount: oneInviteAccount, toInviteAccount: toInviteAccount, to: randomUser.publicKey, authority: testUser.publicKey, systemProgram: SystemProgram.programId})
-            .transaction();
-        tx.feePayer = user;
-        tx.recentBlockhash = (await provider.connection.getRecentBlockhash()).blockhash;
-        tx.sign(testUser);
-        await provider.sendAndConfirm(tx)
-        const data = await program.account.invite.fetch(oneInviteAccount);
+        const [inviter, invited] = await sendInvite(testUser, randomUser.publicKey, user)
+        const data = await program.account.invite.fetch(inviter);
         expect(data.referred[0].toString()).to.equal(randomUser.publicKey.toString());
-        const toInviteData = await program.account.invite.fetch(toInviteAccount);
+        const toInviteData = await program.account.invite.fetch(invited);
         expect(toInviteData.authority.toString()).to.equal(randomUser.publicKey.toString());
+    });
+
+    it("should not be able to send more than 2 invites", async () => {
+        // Set up new user
+        const newUser = anchor.web3.Keypair.generate();
+        await airdrop(newUser.publicKey);
+        const inviteAccount = await getInviteAccount(newUser.publicKey);
+        await program.methods.initialize()
+            .accounts({inviteAccount: inviteAccount, authority: newUser.publicKey, payer: user, systemProgram: SystemProgram.programId})
+            .rpc();
+
+        //First Invite
+        const randomUser = anchor.web3.Keypair.generate();
+        await sendInvite(newUser, randomUser.publicKey, user);
+
+        //Second Invite
+        const randomUser1 = anchor.web3.Keypair.generate();
+        await sendInvite(newUser, randomUser1.publicKey, user);
+
+        // Third Invite
+        const randomUser2 = anchor.web3.Keypair.generate();
+        try {
+            await sendInvite(newUser, randomUser2.publicKey, user);
+        } catch (error) {
+            expect(error.toString()).to.contain('custom program error: 0xbbc');
+        }
     });
 
 
@@ -84,22 +123,10 @@ describe('invite', async () => {
 
     it("should not allow uninitialized invite account to send an invite", async () => {
         const randomUser = anchor.web3.Keypair.generate();
-        const toInviteSeed = [Buffer.from("invite"), randomUser.publicKey.toBuffer()];
-        const [toInviteAccount, _1] = await anchor.web3.PublicKey.findProgramAddress(toInviteSeed, program.programId);
         const randomUser1 = anchor.web3.Keypair.generate();
-        const inviteSeed = [Buffer.from("invite"), randomUser1.publicKey.toBuffer()];
-        const airdropSig = await provider.connection.requestAirdrop(randomUser1.publicKey, 1 * LAMPORTS_PER_SOL);
-        await provider.connection.confirmTransaction(airdropSig);
-        const [inviteAccount, _2] = await anchor.web3.PublicKey.findProgramAddress(inviteSeed, program.programId);
-        const tx = await program.methods.sendInvite()
-            .accounts({inviteAccount: inviteAccount, toInviteAccount: toInviteAccount, to: randomUser.publicKey, authority: randomUser1.publicKey, systemProgram: SystemProgram.programId})
-            .transaction();
-        tx.feePayer = user;
-        tx.recentBlockhash = (await provider.connection.getRecentBlockhash()).blockhash;
-        tx.sign(randomUser1);
+        await airdrop(randomUser1.publicKey);
         try {
-            await provider.sendAndConfirm(tx)
-
+            await sendInvite(randomUser, randomUser1.publicKey, user)
         } catch (error) {
             expect(error.toString()).to.contain('custom program error: 0xbc4');
         }
