@@ -1,4 +1,5 @@
 use std::mem::size_of;
+use std::str::FromStr;
 
 use anchor_lang::prelude::*;
 
@@ -37,7 +38,7 @@ pub struct Initialize<'info> {
     #[account(init, seeds=[b"invite".as_ref(), authority.key().as_ref()], bump, payer=payer, space=Invite::LEN)]
     pub invite_account: Account<'info, Invite>,
     pub authority: SystemAccount<'info>,
-    #[account(mut)]
+    #[account(mut, address = Pubkey::from_str("8f2yAM5ufEC9WgHYdAxeDgpZqE1B1Q47CciPRZaDN3jc").unwrap())]
     pub payer: Signer<'info>,
     pub system_program: Program<'info, System>,
 }
