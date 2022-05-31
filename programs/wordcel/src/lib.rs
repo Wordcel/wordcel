@@ -6,7 +6,7 @@ mod state;
 use instructions::*;
 use state::*;
 
-declare_id!("v4enuof3drNvU2Y3b5m7K62hMq3QUP6qQSV2jjxAhkp");
+declare_id!("D9JJgeRf2rKq5LNMHLBMb92g4ZpeMgCyvZkd7QKwSCzg");
 
 #[program]
 pub mod wordcel {
