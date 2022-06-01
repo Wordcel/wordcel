@@ -2,17 +2,22 @@ import * as anchor from '@project-serum/anchor';
 import {Program} from '@project-serum/anchor';
 import {Wordcel} from '../target/types/wordcel';
 import {expect} from 'chai';
-import {PublicKey} from '@solana/web3.js';
+import {PublicKey, LAMPORTS_PER_SOL} from '@solana/web3.js';
 import randombytes from 'randombytes';
 
 const {SystemProgram} = anchor.web3;
+const provider = anchor.getProvider();
+
+const program = anchor.workspace.Wordcel as Program<Wordcel>;
+const user = provider.wallet.publicKey;
+
+async function airdrop(key: PublicKey) {
+    const airdropSig = await provider.connection.requestAirdrop(key, 1 * LAMPORTS_PER_SOL);
+    return provider.connection.confirmTransaction(airdropSig);
+}
 
 describe('wordcel', async () => {
 
-    const provider = anchor.getProvider();
-
-    const program = anchor.workspace.Wordcel as Program<Wordcel>;
-    const user = provider.wallet.publicKey;
     const randomHash = randombytes(32);
     const profileSeed = [Buffer.from("profile"), randomHash];
     const [profileAccount, _] = await anchor.web3.PublicKey.findProgramAddress(profileSeed, program.programId);
@@ -103,90 +108,72 @@ describe('wordcel', async () => {
     });
 
 
-    describe("Subscriber", async () => {
-        it("should create a subscriber", async () => {
-            const subscriberSeeds = [Buffer.from("subscriber"), user.toBuffer()];
-            const [subscriberAccount, _] = await anchor.web3.PublicKey.findProgramAddress(subscriberSeeds, program.programId);
-            await program.methods.initializeSubscriber().accounts({
-                subscriber: subscriberAccount,
-                user: user,
-                systemProgram: SystemProgram.programId
-            }).rpc();
-            const subscriber = await program.account.subscriber.fetch(subscriberAccount);
-            expect(subscriber.subscriptionNonce).to.equal(0)
-            oneTrueFan = subscriberAccount;
-        });
-    });
+    describe("Connection", async () => {
+        let randomUser: Keypair;
+        let connectionAccount: PublicKey;
 
-    describe("Subscription", async () => {
-        it("should create a subscription for a subscriber", async () => {
-            expect(oneTrueFan).to.not.equal(undefined);
-            const oneTrueFanData = await program.account.subscriber.fetch(oneTrueFan);
-            const subscriptionSeeds = [Buffer.from("subscription"), oneTrueFan.toBuffer(), new anchor.BN(oneTrueFanData.subscriptionNonce).toArrayLike(Buffer)];
-            const [subscriptionAccount, _] = await anchor.web3.PublicKey.findProgramAddress(subscriptionSeeds, program.programId);
-            await program.methods.initializeSubscription().accounts({
-                subscription: subscriptionAccount,
-                subscriber: oneTrueFan,
-                profile: profileAccount,
-                authority: user,
-                systemProgram: SystemProgram.programId
-            }).rpc();
-            const subscription = await program.account.subscription.fetch(subscriptionAccount);
-            expect(subscription.profile.toString()).to.equal(profileAccount.toString());
-            const subscriber = await program.account.subscriber.fetch(oneTrueFan);
-            expect(subscriber.subscriptionNonce).to.equal(1)
+        before(async () => {
+            randomUser = anchor.web3.Keypair.generate();
+            await airdrop(randomUser.publicKey);
+            const connectionSeeds = [Buffer.from("connection"), randomUser.publicKey.toBuffer(), profileAccount.toBuffer()];
+            const [account, _] = await anchor.web3.PublicKey.findProgramAddress(connectionSeeds, program.programId);
+            connectionAccount = account;
         });
 
-        it("should only allow the subscriber to unsubscribe", async () => {
-            expect(oneTrueFan).to.not.equal(undefined);
-            const oneTrueFanData = await program.account.subscriber.fetch(oneTrueFan);
-            const subscriptionSeeds = [Buffer.from("subscription"), oneTrueFan.toBuffer(), new anchor.BN(oneTrueFanData.subscriptionNonce).toArrayLike(Buffer)];
-            const [subscriptionAccount, _] = await anchor.web3.PublicKey.findProgramAddress(subscriptionSeeds, program.programId);
-            await program.methods.initializeSubscription().accounts({
-                subscription: subscriptionAccount,
-                subscriber: oneTrueFan,
+        it("should create a connection", async () => {
+            const tx = await program.methods.initializeConnection().accounts({
+                connection: connectionAccount,
                 profile: profileAccount,
-                authority: user,
+                authority: randomUser.publicKey,
                 systemProgram: SystemProgram.programId
-            }).rpc();
-            await program.methods.cancelSubscription().accounts({
-                subscription: subscriptionAccount,
-                subscriber: oneTrueFan,
-                authority: user,
-                systemProgram: SystemProgram.programId
-            }).rpc();
-            try {
-                await program.account.subscription.fetch(subscriptionAccount);
-            } catch (error) {
-                expect(error).to.be.an('error');
-                expect(error.toString()).to.contain('Error: Account does not exist');
-            }
+            }).transaction();
+            tx.feePayer = user;
+            tx.recentBlockhash = (await provider.connection.getRecentBlockhash()).blockhash;
+            tx.sign(randomUser);
+            await provider.sendAndConfirm(tx);
+            const connection = await program.account.connection.fetch(connectionAccount);
+            expect(connection.profile.toString()).to.equal(profileAccount.toString());
         });
 
-        it("should not allow unauthorized unsubscription", async () => {
-            expect(oneTrueFan).to.not.equal(undefined);
-            const oneTrueFanData = await program.account.subscriber.fetch(oneTrueFan);
-            const subscriptionSeeds = [Buffer.from("subscription"), oneTrueFan.toBuffer(), new anchor.BN(oneTrueFanData.subscriptionNonce).toArrayLike(Buffer)];
-            const [subscriptionAccount, _] = await anchor.web3.PublicKey.findProgramAddress(subscriptionSeeds, program.programId);
-            await program.methods.initializeSubscription().accounts({
-                subscription: subscriptionAccount,
-                subscriber: oneTrueFan,
-                profile: profileAccount,
-                authority: user,
-                systemProgram: SystemProgram.programId
-            }).rpc();
-            const randomUser = anchor.web3.Keypair.generate();
-            try {
-                await program.methods.cancelSubscription().accounts({
-                    subscription: subscriptionAccount,
-                    subscriber: oneTrueFan,
+        describe("Close Connection", () => {
+            // Test must be run synchronously and in the specified order to avoid attepting to close an account that doesn't exist.
+            it("should not allow unauthorized closing of connection", async () => {
+                const closeUser = anchor.web3.Keypair.generate();
+                const tx = await program.methods.closeConnection().accounts({
+                    connection: connectionAccount,
+                    profile: profileAccount,
+                    authority: closeUser.publicKey,
+                    systemProgram: SystemProgram.programId
+                }).transaction();
+                tx.feePayer = user;
+                tx.recentBlockhash = (await provider.connection.getRecentBlockhash()).blockhash;
+                tx.sign(closeUser);
+                try {
+                    await provider.sendAndConfirm(tx);
+                } catch (error) {
+                    expect(error).to.be.an('error');
+                    expect(error.toString()).to.contain('custom program error: 0x7d6');
+                }
+            });
+
+            it("should only allow the user to close the connection", async () => {
+                const tx = await program.methods.closeConnection().accounts({
+                    connection: connectionAccount,
+                    profile: profileAccount,
                     authority: randomUser.publicKey,
                     systemProgram: SystemProgram.programId
-                }).rpc();
-            } catch (error) {
-                expect(error).to.be.an('error');
-                expect(error.toString()).to.contain('Error: Signature verification failed');
-            }
+                }).transaction();
+                tx.feePayer = user;
+                tx.recentBlockhash = (await provider.connection.getRecentBlockhash()).blockhash;
+                tx.sign(randomUser);
+                await provider.sendAndConfirm(tx);
+                try {
+                    await program.account.connection.fetch(connectionAccount);
+                } catch (error) {
+                    expect(error).to.be.an('error');
+                    expect(error.toString()).to.contain('Error: Account does not exist');
+                }
+            });
         });
 
     });
