@@ -38,7 +38,7 @@
             "accounts": [
                 {
                     "name": "profile",
-                    "isMut": true,
+                    "isMut": false,
                     "isSigner": false
                 },
                 {
@@ -78,7 +78,7 @@
             "accounts": [
                 {
                     "name": "profile",
-                    "isMut": true,
+                    "isMut": false,
                     "isSigner": false
                 },
                 {
@@ -109,7 +109,7 @@
             "accounts": [
                 {
                     "name": "profile",
-                    "isMut": true,
+                    "isMut": false,
                     "isSigner": false
                 },
                 {
@@ -150,36 +150,10 @@
             ]
         },
         {
-            "name": "initializeSubscriber",
+            "name": "initializeConnection",
             "accounts": [
                 {
-                    "name": "subscriber",
-                    "isMut": true,
-                    "isSigner": false
-                },
-                {
-                    "name": "user",
-                    "isMut": true,
-                    "isSigner": true
-                },
-                {
-                    "name": "systemProgram",
-                    "isMut": false,
-                    "isSigner": false
-                }
-            ],
-            "args": []
-        },
-        {
-            "name": "initializeSubscription",
-            "accounts": [
-                {
-                    "name": "subscriber",
-                    "isMut": true,
-                    "isSigner": false
-                },
-                {
-                    "name": "subscription",
+                    "name": "connection",
                     "isMut": true,
                     "isSigner": false
                 },
@@ -202,21 +176,21 @@
             "args": []
         },
         {
-            "name": "cancelSubscription",
+            "name": "closeConnection",
             "accounts": [
                 {
-                    "name": "subscriber",
+                    "name": "connection",
                     "isMut": true,
                     "isSigner": false
                 },
                 {
-                    "name": "subscription",
-                    "isMut": true,
+                    "name": "profile",
+                    "isMut": false,
                     "isSigner": false
                 },
                 {
                     "name": "authority",
-                    "isMut": false,
+                    "isMut": true,
                     "isSigner": true
                 },
                 {
@@ -290,27 +264,7 @@
             }
         },
         {
-            "name": "Subscriber",
-            "type": {
-                "kind": "struct",
-                "fields": [
-                    {
-                        "name": "authority",
-                        "type": "publicKey"
-                    },
-                    {
-                        "name": "subscriptionNonce",
-                        "type": "u8"
-                    },
-                    {
-                        "name": "bump",
-                        "type": "u8"
-                    }
-                ]
-            }
-        },
-        {
-            "name": "Subscription",
+            "name": "Connection",
             "type": {
                 "kind": "struct",
                 "fields": [
@@ -319,7 +273,7 @@
                         "type": "publicKey"
                     },
                     {
-                        "name": "subscriber",
+                        "name": "authority",
                         "type": "publicKey"
                     },
                     {
