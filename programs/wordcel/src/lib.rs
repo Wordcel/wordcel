@@ -64,24 +64,15 @@ pub mod wordcel {
         Ok(())
     }
 
-    pub fn initialize_subscriber(ctx: Context<InitializeSubscriber>) -> Result<()> {
-        let subscriber = &mut ctx.accounts.subscriber;
-        subscriber.bump = *ctx.bumps.get("subscriber").unwrap();
-        subscriber.authority = *ctx.accounts.user.to_account_info().key;
+    pub fn initialize_connection(ctx: Context<InitializeConnection>) -> Result<()> {
+        let connection = &mut ctx.accounts.connection;
+        connection.bump = *ctx.bumps.get("connection").unwrap();
+        connection.profile = *ctx.accounts.profile.to_account_info().key;
+        connection.authority = *ctx.accounts.authority.to_account_info().key;
         Ok(())
     }
 
-    pub fn initialize_subscription(ctx: Context<InitializeSubscription>) -> Result<()> {
-        let subscription = &mut ctx.accounts.subscription;
-        subscription.bump = *ctx.bumps.get("subscription").unwrap();
-        subscription.profile = *ctx.accounts.profile.to_account_info().key;
-        subscription.subscriber = *ctx.accounts.subscriber.to_account_info().key;
-        let subscriber = &mut ctx.accounts.subscriber;
-        subscriber.subscription_nonce = subscriber.subscription_nonce.checked_add(1).unwrap();
-        Ok(())
-    }
-
-    pub fn cancel_subscription(_ctx: Context<CancelSubscription>) -> Result<()> {
+    pub fn close_connection(_ctx: Context<CloseConnection>) -> Result<()> {
         Ok(())
     }
 }

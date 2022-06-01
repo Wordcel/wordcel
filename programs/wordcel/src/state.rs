@@ -44,24 +44,12 @@ impl Post {
 
 #[account]
 #[derive(Default)]
-pub struct Subscriber {
-    pub authority: Pubkey,
-    pub subscription_nonce: u8,
-    pub bump: u8,
-}
-
-impl Subscriber {
-    pub const LEN: usize = 8 + size_of::<Self>();
-}
-
-#[account]
-#[derive(Default)]
-pub struct Subscription {
+pub struct Connection {
     pub profile: Pubkey,
-    pub subscriber: Pubkey,
+    pub authority: Pubkey,
     pub bump: u8,
 }
 
-impl Subscription {
+impl Connection {
     pub const LEN: usize = 8 + size_of::<Self>();
 }
