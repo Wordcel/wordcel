@@ -3,6 +3,8 @@ use std::str::FromStr;
 
 use anchor_lang::prelude::*;
 
+pub const INVITE_PREFIX: &str = "invite";
+
 declare_id!("6G5x4Es2YZYB5e4QkFJN88TrfLABkYEQpkUH5Gob9Cut");
 
 #[program]
@@ -37,13 +39,13 @@ pub mod invite {
 pub struct Initialize<'info> {
     #[account(
         init,
-        seeds=[
-            b"invite".as_ref(),
+        seeds = [
+            INVITE_PREFIX.as_bytes().as_ref(),
             authority.key().as_ref()
         ],
         bump,
-        payer=payer,
-        space=Invite::LEN
+        payer = payer,
+        space = Invite::LEN
     )]
     pub invite_account: Account<'info, Invite>,
     pub authority: SystemAccount<'info>,
@@ -59,23 +61,23 @@ pub struct Initialize<'info> {
 pub struct SendInvite<'info> {
     #[account(
         mut,
-        has_one=authority,
-        seeds=[
-            b"invite".as_ref(),
+        has_one = authority,
+        seeds = [
+            INVITE_PREFIX.as_bytes().as_ref(),
             authority.key().as_ref()
         ],
-        bump=invite_account.bump
+        bump = invite_account.bump
     )]
     pub invite_account: Account<'info, Invite>,
     #[account(
         init,
-        seeds=[
-            b"invite".as_ref(),
+        seeds = [
+            INVITE_PREFIX.as_bytes().as_ref(),
             to.key().as_ref()
         ],
         bump,
-        payer=authority,
-        space=Invite::LEN
+        payer = authority,
+        space = Invite::LEN
     )]
     pub to_invite_account: Account<'info, Invite>,
     pub to: SystemAccount<'info>,
@@ -87,9 +89,9 @@ pub struct SendInvite<'info> {
 #[account]
 #[derive(Default)]
 pub struct Invite {
-    authority: Pubkey,
-    bump: u8,
-    referred: Vec<Pubkey>,
+    pub authority: Pubkey,
+    pub bump: u8,
+    pub referred: Vec<Pubkey>,
 }
 
 impl Invite {

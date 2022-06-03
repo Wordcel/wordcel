@@ -2,7 +2,9 @@ import * as anchor from '@project-serum/anchor';
 import {Program} from '@project-serum/anchor';
 import {Invite} from '../target/types/invite';
 import {expect} from 'chai';
-import {Keypair, LAMPORTS_PER_SOL, PublicKey} from '@solana/web3.js';
+import {PublicKey} from '@solana/web3.js';
+import {getInviteAccount, sendInvite} from "./utils/invite";
+import {airdrop} from './utils';
 
 const {SystemProgram} = anchor.web3;
 const provider = anchor.getProvider();
@@ -10,36 +12,6 @@ const provider = anchor.getProvider();
 const program = anchor.workspace.Invite as Program<Invite>;
 const user = provider.wallet.publicKey;
 
-
-async function airdrop(key: PublicKey) {
-    const airdropSig = await provider.connection.requestAirdrop(key, 1 * LAMPORTS_PER_SOL);
-    return provider.connection.confirmTransaction(airdropSig);
-}
-
-async function getInviteAccount(key: PublicKey) {
-    const seed = [Buffer.from("invite"), key.toBuffer()];
-    const [account, _] = await anchor.web3.PublicKey.findProgramAddress(seed, program.programId);
-    return account;
-}
-
-async function sendInvite(from_user: Keypair, to: PublicKey, feePayer: PublicKey) {
-    const inviteAccount = await getInviteAccount(from_user.publicKey)
-    const toInviteAccount = await getInviteAccount(to)
-    const tx = await program.methods.sendInvite()
-        .accounts({
-            inviteAccount: inviteAccount,
-            toInviteAccount: toInviteAccount,
-            to: to,
-            authority: from_user.publicKey,
-            systemProgram: SystemProgram.programId
-        })
-        .transaction();
-    tx.feePayer = feePayer;
-    tx.recentBlockhash = (await provider.connection.getRecentBlockhash()).blockhash;
-    tx.sign(from_user);
-    await provider.sendAndConfirm(tx);
-    return [inviteAccount, toInviteAccount];
-}
 
 describe('Invitation', async () => {
     // Prepare test user.

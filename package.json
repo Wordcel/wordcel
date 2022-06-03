@@ -1,6 +1,6 @@
 {
     "scripts": {
-        "test:all": "anchor test tests/**/**.ts",
+        "test:all": "anchor test tests/**/**.spec.ts",
         "test": "anchor test"
     },
     "dependencies": {

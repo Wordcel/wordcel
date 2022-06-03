@@ -1,6 +1,6 @@
 [package]
 name = "wordcel"
-version = "0.1.0"
+version = "0.1.1"
 description = "Created with Anchor"
 edition = "2018"
 
@@ -17,3 +17,4 @@ default = []
 
 [dependencies]
 anchor-lang = "0.24.2"
+invite = { path = "../invite", features = ["cpi"] }
