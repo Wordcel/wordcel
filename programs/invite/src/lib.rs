@@ -35,19 +35,48 @@ pub mod invite {
 
 #[derive(Accounts)]
 pub struct Initialize<'info> {
-    #[account(init, seeds=[b"invite".as_ref(), authority.key().as_ref()], bump, payer=payer, space=Invite::LEN)]
+    #[account(
+        init,
+        seeds=[
+            b"invite".as_ref(),
+            authority.key().as_ref()
+        ],
+        bump,
+        payer=payer,
+        space=Invite::LEN
+    )]
     pub invite_account: Account<'info, Invite>,
     pub authority: SystemAccount<'info>,
-    #[account(mut, address = Pubkey::from_str("8f2yAM5ufEC9WgHYdAxeDgpZqE1B1Q47CciPRZaDN3jc").unwrap())]
+    #[account(
+        mut,
+        address = Pubkey::from_str("8f2yAM5ufEC9WgHYdAxeDgpZqE1B1Q47CciPRZaDN3jc").unwrap()
+    )]
     pub payer: Signer<'info>,
     pub system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
 pub struct SendInvite<'info> {
-    #[account(mut, has_one=authority, seeds=[b"invite".as_ref(), authority.key().as_ref()], bump=invite_account.bump)]
+    #[account(
+        mut,
+        has_one=authority,
+        seeds=[
+            b"invite".as_ref(),
+            authority.key().as_ref()
+        ],
+        bump=invite_account.bump
+    )]
     pub invite_account: Account<'info, Invite>,
-    #[account(init, seeds=[b"invite".as_ref(), to.key().as_ref()], bump, payer=authority, space=Invite::LEN)]
+    #[account(
+        init,
+        seeds=[
+            b"invite".as_ref(),
+            to.key().as_ref()
+        ],
+        bump,
+        payer=authority,
+        space=Invite::LEN
+    )]
     pub to_invite_account: Account<'info, Invite>,
     pub to: SystemAccount<'info>,
     #[account(mut)]
