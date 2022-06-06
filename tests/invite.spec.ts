@@ -97,7 +97,7 @@ describe('Invitation', async () => {
         try {
             await provider.sendAndConfirm(tx)
         } catch (error) {
-            expect(error.toString()).to.contain('custom program error: 0x7dc');
+            expect(error.toString()).to.contain('custom program error: 0x7d3');
         }
     });
 
