@@ -1,6 +1,6 @@
 use crate::*;
 use invite::program::Invite as InvitationProgram;
-use invite::{Invite, INVITE_PREFIX};
+use invite::Invite;
 
 #[derive(Accounts)]
 #[instruction(random_hash: [u8;32])]
@@ -19,7 +19,7 @@ pub struct Initialize<'info> {
     #[account(
         owner = invitation_program.key(),
         seeds = [
-            INVITE_PREFIX.as_bytes().as_ref(),
+            Invite::PREFIX.as_bytes().as_ref(),
             user.key().as_ref()
         ],
         seeds::program = invitation_program.key(),

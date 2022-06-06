@@ -1,5 +1,5 @@
 import * as anchor from '@project-serum/anchor';
-import {Program} from '@project-serum/anchor';
+import {Program, AnchorError} from '@project-serum/anchor';
 import {Invite} from '../target/types/invite';
 import {expect} from 'chai';
 import {PublicKey} from '@solana/web3.js';
@@ -42,8 +42,10 @@ describe('Invitation', async () => {
         const randomUser = anchor.web3.Keypair.generate();
         const [inviter, invited] = await sendInvite(testUser, randomUser.publicKey, user)
         const data = await program.account.invite.fetch(inviter);
-        expect(data.referred[0].toString()).to.equal(randomUser.publicKey.toString());
+        expect(data.invitesLeft).to.equal(1);
+        expect(data.invitesSent).to.equal(1);
         const toInviteData = await program.account.invite.fetch(invited);
+        expect(toInviteData.invitedBy.toString()).to.equal(testUser.publicKey.toString());
         expect(toInviteData.authority.toString()).to.equal(randomUser.publicKey.toString());
     });
 
@@ -74,7 +76,8 @@ describe('Invitation', async () => {
         try {
             await sendInvite(newUser, randomUser2.publicKey, user);
         } catch (error) {
-            expect(error.toString()).to.contain('custom program error: 0xbbc');
+            const anchorError = AnchorError.parse(error.logs);
+            expect(anchorError.error.errorCode.code).to.equal('NoInvitesLeft');
         }
     });
 
@@ -97,7 +100,8 @@ describe('Invitation', async () => {
         try {
             await provider.sendAndConfirm(tx)
         } catch (error) {
-            expect(error.toString()).to.contain('custom program error: 0x7d3');
+            const anchorError = AnchorError.parse(error.logs);
+            expect(anchorError.error.errorCode.code).to.equal('UnAuthorizedInitialization');
         }
     });
 
@@ -126,7 +130,8 @@ describe('Invitation', async () => {
         try {
             await sendInvite(randomUser, randomUser1.publicKey, user)
         } catch (error) {
-            expect(error.toString()).to.contain('custom program error: 0xbc4');
+            const anchorError = AnchorError.parse(error.logs);
+            expect(anchorError.error.errorCode.code).to.equal('AccountNotInitialized');
         }
     });
 });
