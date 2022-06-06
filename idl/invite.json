@@ -75,10 +75,16 @@
             "type": "u8"
           },
           {
-            "name": "referred",
-            "type": {
-              "vec": "publicKey"
-            }
+            "name": "invitesSent",
+            "type": "u8"
+          },
+          {
+            "name": "invitesLeft",
+            "type": "u8"
+          },
+          {
+            "name": "invitedBy",
+            "type": "publicKey"
           }
         ]
       }
@@ -88,6 +94,10 @@
     {
       "code": 6000,
       "name": "NoInvitesLeft"
+    },
+    {
+      "code": 6001,
+      "name": "UnAuthorizedInitialization"
     }
   ]
 }
