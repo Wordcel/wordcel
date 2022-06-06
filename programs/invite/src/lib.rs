@@ -35,6 +35,23 @@ pub mod invite {
     }
 }
 
+fn is_whitelisted(key: Pubkey) -> bool {
+    let whitelisted_keys: Vec<Pubkey> = [
+        // Wordcel Admin
+        "8f2yAM5ufEC9WgHYdAxeDgpZqE1B1Q47CciPRZaDN3jc",
+        // Shek
+        "9M8NddGMCee9ETXXJTGHJHN1vDEqvasMCCirNW94nFNH",
+        // Kunal
+        "8kgbAgt8oedfprQ9LWekUh6rbY264Nv75eunHPpkbYGX",
+        // Paarug
+        "Gs3xD3V6We8H62pM9fkufKs644KWz1pts4EUn3bAR6Yb",
+    ]
+    .iter()
+    .map(|k| Pubkey::from_str(k).unwrap())
+    .collect();
+    whitelisted_keys.contains(&key)
+}
+
 #[derive(Accounts)]
 pub struct Initialize<'info> {
     #[account(
@@ -51,7 +68,7 @@ pub struct Initialize<'info> {
     pub authority: SystemAccount<'info>,
     #[account(
         mut,
-        address = Pubkey::from_str("8f2yAM5ufEC9WgHYdAxeDgpZqE1B1Q47CciPRZaDN3jc").unwrap()
+        constraint = is_whitelisted(payer.key())
     )]
     pub payer: Signer<'info>,
     pub system_program: Program<'info, System>,
