@@ -1,7 +1,10 @@
 {
     "scripts": {
         "test:all": "anchor test tests/**/**.spec.ts",
-        "test": "anchor test"
+        "test": "anchor test",
+        "build:invite:mainnet": "anchor build -p invite --provider.cluster mainnet",
+        "build:wordcel:mainnet": "anchor build -p wordcel --provider.cluster mainnet",
+        "build:all:mainnet": "anchor build --provider.cluster mainnet"
     },
     "dependencies": {
         "@bundlr-network/client": "^0.5.12",
