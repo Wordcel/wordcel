@@ -2,6 +2,14 @@
 wordcel = "D9JJgeRf2rKq5LNMHLBMb92g4ZpeMgCyvZkd7QKwSCzg"
 invite = "6G5x4Es2YZYB5e4QkFJN88TrfLABkYEQpkUH5Gob9Cut"
 
+[programs.devnet]
+wordcel = "D9JJgeRf2rKq5LNMHLBMb92g4ZpeMgCyvZkd7QKwSCzg"
+invite = "6G5x4Es2YZYB5e4QkFJN88TrfLABkYEQpkUH5Gob9Cut"
+
+[programs.mainnet]
+wordcel = "EXzAYHZ8xS6QJ6xGRsdKZXixoQBLsuMbmwJozm85jHp"
+invite = "Fc4q6ttyDHr11HjMHRvanG9SskeR24Q62egdwsUUMHLf"
+
 [registry]
 url = "https://anchor.projectserum.com"
 
