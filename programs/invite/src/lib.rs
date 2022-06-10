@@ -3,7 +3,14 @@ use std::str::FromStr;
 
 use anchor_lang::prelude::*;
 
+#[cfg(not(any(feature = "mainnet", feature = "devnet")))]
 declare_id!("6G5x4Es2YZYB5e4QkFJN88TrfLABkYEQpkUH5Gob9Cut");
+
+#[cfg(feature = "devnet")]
+declare_id!("6G5x4Es2YZYB5e4QkFJN88TrfLABkYEQpkUH5Gob9Cut");
+
+#[cfg(feature = "mainnet")]
+declare_id!("Fc4q6ttyDHr11HjMHRvanG9SskeR24Q62egdwsUUMHLf");
 
 #[program]
 pub mod invite {
