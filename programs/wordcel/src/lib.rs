@@ -6,7 +6,14 @@ mod state;
 use instructions::*;
 use state::*;
 
+#[cfg(not(any(feature = "mainnet", feature = "devnet")))]
+declare_id!("v4enuof3drNvU2Y3b5m7K62hMq3QUP6qQSV2jjxAhkp");
+
+#[cfg(feature = "devnet")]
 declare_id!("D9JJgeRf2rKq5LNMHLBMb92g4ZpeMgCyvZkd7QKwSCzg");
+
+#[cfg(feature = "mainnet")]
+declare_id!("EXzAYHZ8xS6QJ6xGRsdKZXixoQBLsuMbmwJozm85jHp");
 
 #[program]
 pub mod wordcel {

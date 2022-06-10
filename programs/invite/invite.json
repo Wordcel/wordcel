@@ -1,0 +1,103 @@
+{
+  "version": "0.1.0",
+  "name": "invite",
+  "instructions": [
+    {
+      "name": "initialize",
+      "accounts": [
+        {
+          "name": "inviteAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "sendInvite",
+      "accounts": [
+        {
+          "name": "inviteAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "toInviteAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "to",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Invite",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "publicKey"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "invitesSent",
+            "type": "u8"
+          },
+          {
+            "name": "invitesLeft",
+            "type": "u8"
+          },
+          {
+            "name": "invitedBy",
+            "type": "publicKey"
+          }
+        ]
+      }
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "NoInvitesLeft"
+    },
+    {
+      "code": 6001,
+      "name": "UnAuthorizedInitialization"
+    }
+  ]
+}
