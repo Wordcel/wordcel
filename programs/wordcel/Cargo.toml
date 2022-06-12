@@ -14,9 +14,9 @@ no-idl = []
 no-log-ix-name = []
 cpi = ["no-entrypoint"]
 default = []
-devnet = []
-mainnet = []
+devnet = ["invite", "invite/devnet"]
+mainnet = ["invite", "invite/devnet"]
 
 [dependencies]
 anchor-lang = "0.24.2"
-invite = { path = "../invite", features = ["cpi"] }
+invite = { path = "../invite", features = ["cpi"], optional = true }
