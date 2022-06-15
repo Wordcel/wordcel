@@ -1,18 +1,36 @@
 {
+    "scripts": {
+        "test:all": "anchor test tests/**/**.spec.ts",
+        "test": "anchor test",
+        "build:invite:mainnet": "anchor build -p invite --provider.cluster mainnet -- --features mainnet",
+        "build:wordcel:mainnet": "anchor build -p wordcel --provider.cluster mainnet -- --features mainnet",
+        "build:all:mainnet": "anchor build --provider.cluster mainnet -- --features mainnet",
+        "build:invite:devnet": "anchor build -p invite --provider.cluster devnet -- --features devnet",
+        "build:wordcel:devnet": "anchor build -p wordcel --provider.cluster devnet -- --features devnet",
+        "build:all:devnet": "anchor build --provider.cluster devnet -- --features devnet",
+        "upgrade:invite:mainnet": "goki upgrade-local -l target/deploy/invite.so -p .solana/keys/mainnet/invite-keypair.json -u ~/.config/solana/wordcel_mainnet.json -c mainnet",
+        "upgrade:wordcel:mainnet": "goki upgrade-local -l target/deploy/wordcel.so -p .solana/keys/mainnet/wordcel-keypair.json -u ~/.config/solana/wordcel_mainnet.json -c mainnet",
+        "idl:upgrade:wordcel:mainnet": "anchor idl upgrade -f idl/wordcel.json --provider.cluster mainnet --provider.wallet ~/.config/solana/wordcel_mainnet.json EXzAYHZ8xS6QJ6xGRsdKZXixoQBLsuMbmwJozm85jHp",
+        "idl:upgrade:invite:mainnet": "anchor idl upgrade -f idl/invite.json --provider.cluster mainnet --provider.wallet ~/.config/solana/wordcel_mainnet.json Fc4q6ttyDHr11HjMHRvanG9SskeR24Q62egdwsUUMHLf",
+        "idl:upgrade:wordcel:devnet": "anchor idl upgrade -f idl/wordcel.json --provider.cluster devnet --provider.wallet D9JJgeRf2rKq5LNMHLBMb92g4ZpeMgCyvZkd7QKwSCzg",
+        "idl:upgrade:invite:devnet": "anchor idl upgrade -f idl/invite.json --provider.cluster mainnet --provider.wallet 6G5x4Es2YZYB5e4QkFJN88TrfLABkYEQpkUH5Gob9Cut"
+    },
     "dependencies": {
         "@bundlr-network/client": "^0.5.12",
-        "@project-serum/anchor": "^0.20.1",
-        "arweave": "^1.10.18"
+        "@project-serum/anchor": "^0.24.2",
+        "arweave": "^1.10.18",
+        "randombytes": "^2.1.0"
     },
     "devDependencies": {
         "@types/chai": "^4.3.0",
         "@types/mocha": "^9.0.0",
         "@types/node": "^17.0.8",
+        "@types/randombytes": "^2.0.0",
         "chai": "^4.3.4",
         "commander": "^2.20.3",
         "mocha": "^9.0.3",
         "node-fetch": "^2.6.1",
-        "ts-mocha": "^8.0.0",
+        "ts-mocha": "^10.0.0",
         "typescript": "^4.3.5"
     }
 }

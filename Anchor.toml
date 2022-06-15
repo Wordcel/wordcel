@@ -1,13 +1,23 @@
 [programs.localnet]
 wordcel = "v4enuof3drNvU2Y3b5m7K62hMq3QUP6qQSV2jjxAhkp"
+invite = "6G5x4Es2YZYB5e4QkFJN88TrfLABkYEQpkUH5Gob9Cut"
+
+[programs.devnet]
+wordcel = "D9JJgeRf2rKq5LNMHLBMb92g4ZpeMgCyvZkd7QKwSCzg"
+invite = "6G5x4Es2YZYB5e4QkFJN88TrfLABkYEQpkUH5Gob9Cut"
+
+[programs.mainnet]
+wordcel = "EXzAYHZ8xS6QJ6xGRsdKZXixoQBLsuMbmwJozm85jHp"
+invite = "Fc4q6ttyDHr11HjMHRvanG9SskeR24Q62egdwsUUMHLf"
 
 [registry]
 url = "https://anchor.projectserum.com"
 
 [provider]
 cluster = "localnet"
-wallet = "/Users/abishek/.config/solana/wordcel_admin.json"
+wallet = "~/.config/solana/wordcel_admin.json"
 
 [scripts]
-test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000"
 cli = "yarn run ts-node --experimental-top-level-await -P ./tsconfig.json scripts/cli.ts"
+invite = "yarn run ts-node --experimental-top-level-await -P ./tsconfig.json scripts/invite.ts"
