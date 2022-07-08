@@ -23,7 +23,9 @@ pub struct Initialize<'info> {
             user.key().as_ref()
         ],
         seeds::program = invitation_program.key(),
-        bump = invitation.bump
+        //FIXME: This would allow someone to externally initialize an invite account and use it in their posts. The attack surface because of this bug is limited because of the user key check, however since we read the bump from the program, the user can create multiple invite accounts with different bumps.
+        bump = invitation.bump,
+        constraint = invitation.authority == user.key()
     )]
     pub invitation: Account<'info, Invite>,
     #[account(mut)]
