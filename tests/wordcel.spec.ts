@@ -165,7 +165,24 @@ describe("wordcel", async () => {
         .rpc();
       const post = await program.account.post.fetch(postAccount);
       expect(post.metadataUri).to.equal(metadataUri);
-      onePostAccount = postAccount;
+    });
+
+    it("should delete a post", async () => {
+      await program.methods
+        .closePost()
+        .accounts({
+          post: onePostAccount,
+          profile: profileAccount,
+          authority: user,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc();
+      try {
+        await program.account.post.fetch(onePostAccount);
+      } catch (error) {
+        expect(error).to.be.an("error");
+        expect(error.toString()).to.contain("Error: Account does not exist");
+      }
     });
   });
 

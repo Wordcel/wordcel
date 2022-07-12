@@ -65,6 +65,10 @@ pub mod wordcel {
         Ok(())
     }
 
+    pub fn close_post(_ctx: Context<ClosePost>) -> Result<()> {
+        Ok(())
+    }
+
     pub fn comment(
         ctx: Context<Comment>,
         metadata_uri: String,
