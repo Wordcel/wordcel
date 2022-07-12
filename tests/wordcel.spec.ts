@@ -1,5 +1,5 @@
 import * as anchor from '@project-serum/anchor';
-import {Program} from '@project-serum/anchor';
+import {Program, AnchorError} from '@project-serum/anchor';
 import {Wordcel} from '../target/types/wordcel';
 import {expect} from 'chai';
 import {PublicKey} from '@solana/web3.js';
@@ -148,6 +148,23 @@ describe('wordcel', async () => {
             await provider.sendAndConfirm(tx);
             const connection = await program.account.connection.fetch(connectionAccount);
             expect(connection.profile.toString()).to.equal(profileAccount.toString());
+        });
+
+        it("should not let a user to follow themselves", async () => {
+            const connectionSeeds = [Buffer.from("connection"), user.toBuffer(), profileAccount.toBuffer()];
+            const [connectionAccount, _] = await anchor.web3.PublicKey.findProgramAddress(connectionSeeds, program.programId);
+            try {
+                await program.methods.initializeConnection().accounts({
+                    connection: connectionAccount,
+                    profile: profileAccount,
+                    authority: user,
+                    systemProgram: SystemProgram.programId
+                }).rpc();
+
+            } catch (error) {
+                const anchorError = AnchorError.parse(error.logs);
+                expect(anchorError.error.errorCode.code).to.equal('SelfFollow');
+            }
         });
 
         describe("Close Connection", () => {

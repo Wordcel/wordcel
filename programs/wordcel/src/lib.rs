@@ -1,8 +1,10 @@
 use anchor_lang::prelude::*;
 
+mod error;
 mod instructions;
 mod state;
 
+use error::*;
 use instructions::*;
 use state::*;
 
@@ -82,9 +84,4 @@ pub mod wordcel {
     pub fn close_connection(_ctx: Context<CloseConnection>) -> Result<()> {
         Ok(())
     }
-}
-
-#[error_code]
-pub enum PostError {
-    URITooLarge,
 }
