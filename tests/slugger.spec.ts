@@ -19,6 +19,9 @@ const sluggerProgram = anchor.workspace.Slugger as Program<Slugger>;
 const user = provider.wallet.publicKey;
 
 
+function getSlugHash(slug) {
+    return createHash('sha256').update(slug, 'utf8').digest();
+}
 async function getSlugAccount(slugHash, profileAccount: PublicKey) {
     const seeds = [Buffer.from("slug"), profileAccount.toBuffer(), slugHash];
     const [account, _] = await anchor.web3.PublicKey.findProgramAddress(seeds, sluggerProgram.programId);
@@ -74,8 +77,7 @@ describe('Slugger', async () => {
 
 
     it("should initialize", async () => {
-        let slug = "foobar";
-        let slugHash = createHash('sha256').update(slug, 'utf8').digest()
+        let slugHash = getSlugHash("gm-wagmi");
         let slugAccount = await getSlugAccount(slugHash, profileAccount);
         await sluggerProgram.methods.initialize(slugHash)
             .accounts({
