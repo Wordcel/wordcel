@@ -4,7 +4,7 @@ use std::mem::size_of;
 use wordcel::program::Wordcel as WordcelProgram;
 use wordcel::state::{Post, Profile};
 
-declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
+declare_id!("SAbD2TPKyTd54oahjz6UEBzweXvojsRWbGB2t21gDnB");
 
 #[program]
 pub mod slugger {
@@ -15,8 +15,8 @@ pub mod slugger {
         slug.slug_hash = slug_hash;
         slug.bump = *ctx.bumps.get("slug").unwrap();
         slug.authority = *ctx.accounts.authority.to_account_info().key;
-        slug.post_account = *ctx.accounts.post.to_account_info().key;
-        slug.profile_account = *ctx.accounts.profile.to_account_info().key;
+        slug.post = *ctx.accounts.post.to_account_info().key;
+        slug.profile = *ctx.accounts.profile.to_account_info().key;
         Ok(())
     }
 }
@@ -36,8 +36,7 @@ pub struct Initialize<'info> {
         init,
         seeds = [
             b"slug".as_ref(),
-            authority.key().as_ref(),
-            post.key().as_ref(),
+            profile.key().as_ref(),
             &slug_hash
         ],
         bump,
@@ -60,7 +59,7 @@ pub struct Initialize<'info> {
         owner = wordcel_program.key(),
         seeds = [
             b"profile".as_ref(),
-            post.random_hash.as_ref()
+            profile.random_hash.as_ref()
         ],
         seeds::program = wordcel_program.key(),
         bump = profile.bump,
@@ -77,8 +76,8 @@ pub struct Initialize<'info> {
 #[derive(Default)]
 pub struct Slug {
     slug_hash: [u8; 32],
-    post_account: Pubkey,
-    profile_account: Pubkey,
+    post: Pubkey,
+    profile: Pubkey,
     bump: u8,
     authority: Pubkey,
 }
