@@ -4,7 +4,7 @@ import {Wordcel} from '../target/types/wordcel';
 import {Slugger} from '../target/types/slugger';
 import {expect} from 'chai';
 import {PublicKey} from '@solana/web3.js';
-import {getInviteAccount, invitationProgram} from "./utils/invite";
+import {getInviteSingleton, invitationProgram} from "./utils/invite";
 import {airdrop} from './utils';
 import randombytes from 'randombytes';
 import {createHash} from 'crypto';
@@ -37,15 +37,7 @@ describe('Slugger', async () => {
     // Prepare test user.
     before(async () => {
         await airdrop(user);
-        inviteAccount = await getInviteAccount(user);
-        // Initialize invite
-        await invitationProgram.methods.initialize()
-            .accounts({
-                inviteAccount: inviteAccount,
-                authority: user,
-                payer: user,
-                systemProgram: SystemProgram.programId
-            }).rpc();
+        inviteAccount = await getInviteSingleton(user);
 
         // Set up a profile
         const profileHash = randombytes(32);

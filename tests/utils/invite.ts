@@ -7,6 +7,8 @@ const {SystemProgram} = anchor.web3;
 const provider = anchor.getProvider();
 const invitationPrefix = Buffer.from("invite");
 
+let inviteMap = new Map<string, PublicKey>();
+
 export const invitationProgram = anchor.workspace.Invite as Program<Invite>;
 
 export async function getInviteAccount(key: PublicKey) {
@@ -32,4 +34,21 @@ export async function sendInvite(from_user: Keypair, to: PublicKey, feePayer: Pu
     tx.sign(from_user);
     await provider.sendAndConfirm(tx);
     return [inviteAccount, toInviteAccount];
+}
+
+export async function getInviteSingleton(user: PublicKey) {
+    const key = user.toString()
+    if(inviteMap.has(key)) {
+        return inviteMap.get(key)
+    }
+    const inviteAccount = await getInviteAccount(user);
+    await invitationProgram.methods.initialize()
+        .accounts({
+            inviteAccount: inviteAccount,
+            authority: user,
+            payer: user,
+            systemProgram: SystemProgram.programId
+        }).rpc();
+    inviteMap.set(key, inviteAccount);
+    return inviteAccount;
 }
