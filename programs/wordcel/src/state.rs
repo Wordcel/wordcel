@@ -14,7 +14,6 @@ pub struct Profile {
 impl Profile {
     pub const LEN: usize = 8 + size_of::<Self>();
 }
-
 #[account]
 #[derive(Default)]
 pub struct Post {
