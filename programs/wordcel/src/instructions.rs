@@ -132,6 +132,8 @@ pub struct InitializeConnection<'info> {
         ],
         bump,
         payer = authority,
+        // Don't allow the user to follow themselves
+        constraint = profile.authority.key() != authority.key() @ConnectionError::SelfFollow,
         space = Connection::LEN
     )]
     pub connection: Account<'info, Connection>,
