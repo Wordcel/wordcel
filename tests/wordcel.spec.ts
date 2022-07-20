@@ -164,6 +164,25 @@ describe('wordcel', async () => {
             } catch (error) {
                 const anchorError = AnchorError.parse(error.logs);
                 expect(anchorError.error.errorCode.code).to.equal('SelfFollow');
+
+            }
+        });
+
+        it("should not create a connection again", async () => {
+            const tx = await program.methods.initializeConnection().accounts({
+                connection: connectionAccount,
+                profile: profileAccount,
+                authority: randomUser.publicKey,
+                systemProgram: SystemProgram.programId
+            }).transaction();
+            tx.feePayer = user;
+            tx.recentBlockhash = (await provider.connection.getRecentBlockhash()).blockhash;
+            tx.sign(randomUser);
+            try {
+                await provider.sendAndConfirm(tx);
+            } catch (error) {
+                expect(error).to.be.an('error');
+                expect(error.toString()).to.contain('custom program error: 0x0');
             }
         });
 
