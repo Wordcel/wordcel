@@ -22,20 +22,22 @@ describe("wordcel", async () => {
   let onePostAccount: PublicKey;
   let inviteAccount: PublicKey;
 
+  before(async () => {
+    // Initialize Invitation Account
+    inviteAccount = await getInviteAccount(user);
+    await invitationProgram.methods
+      .initialize()
+      .accounts({
+        inviteAccount: inviteAccount,
+        authority: user,
+        payer: user,
+        systemProgram: SystemProgram.programId,
+      })
+      .rpc();
+  });
+
   describe("Profile", async () => {
     it("should initialize", async () => {
-      // Initialize Invitation Account
-      inviteAccount = await getInviteAccount(user);
-      await invitationProgram.methods
-        .initialize()
-        .accounts({
-          inviteAccount: inviteAccount,
-          authority: user,
-          payer: user,
-          systemProgram: SystemProgram.programId,
-        })
-        .rpc();
-
       await program.methods
         .initialize(randomHash)
         .accounts({
@@ -61,29 +63,17 @@ describe("wordcel", async () => {
       );
       const metadataUri =
         "https://gist.githubusercontent.com/abishekk92/10593977/raw/589238c3d48e654347d6cbc1e29c1e10dadc7cea/monoid.md";
-      let listener = null;
-      let [event, slot] = await new Promise(async (resolve) => {
-        listener = program.addEventListener("NewPost", async (event, slot) => {
-          resolve([event, slot]);
-        });
-        // Create Post
-        await program.methods
-          .createPost(metadataUri, randomHash)
-          .accounts({
-            post: postAccount,
-            profile: profileAccount,
-            authority: user,
-            systemProgram: SystemProgram.programId,
-          })
-          .rpc();
-      });
-      await program.removeEventListener(listener);
-
+      await program.methods
+        .createPost(metadataUri, randomHash)
+        .accounts({
+          post: postAccount,
+          profile: profileAccount,
+          authority: user,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc();
       const post = await program.account.post.fetch(postAccount);
       expect(post.metadataUri).to.equal(metadataUri);
-      expect(event.post.toString()).to.equal(postAccount.toString());
-      expect(event.profile.toString()).to.equal(post.profile.toString());
-      expect(slot).to.be.above(0);
       onePostAccount = postAccount;
     });
 
@@ -189,40 +179,20 @@ describe("wordcel", async () => {
     });
 
     it("should create a connection", async () => {
-      let listener = null;
-      let [event, slot] = await new Promise(async (resolve) => {
-        listener = program.addEventListener(
-          "NewFollower",
-          async (event, slot) => {
-            resolve([event, slot]);
-          }
-        );
-        // Initialize Connection
-        const tx = await program.methods
-          .initializeConnection()
-          .accounts({
-            connection: connectionAccount,
-            profile: profileAccount,
-            authority: randomUser.publicKey,
-            systemProgram: SystemProgram.programId,
-          })
-          .transaction();
-        tx.feePayer = user;
-        tx.recentBlockhash = (
-          await provider.connection.getRecentBlockhash()
-        ).blockhash;
-        tx.sign(randomUser);
-        await provider.sendAndConfirm(tx);
-      });
-      await program.removeEventListener(listener);
-
+      await program.methods
+        .initializeConnection()
+        .accounts({
+          connection: connectionAccount,
+          profile: profileAccount,
+          authority: randomUser.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([randomUser])
+        .rpc();
       const connection = await program.account.connection.fetch(
         connectionAccount
       );
       expect(connection.profile.toString()).to.equal(profileAccount.toString());
-      expect(event.user.toString()).to.equal(connection.authority.toString());
-      expect(event.followed.toString()).to.equal(connectionAccount.toString());
-      expect(slot).to.be.above(0);
     });
 
     it("should not let a user to follow themselves", async () => {
@@ -253,24 +223,18 @@ describe("wordcel", async () => {
     });
 
     it("should not create a connection again", async () => {
-      const tx = await program.methods
-        .initializeConnection()
-        .accounts({
-          connection: connectionAccount,
-          profile: profileAccount,
-          authority: randomUser.publicKey,
-          systemProgram: SystemProgram.programId,
-        })
-        .transaction();
-      tx.feePayer = user;
-      tx.recentBlockhash = (
-        await provider.connection.getRecentBlockhash()
-      ).blockhash;
-      tx.sign(randomUser);
       try {
-        await provider.sendAndConfirm(tx);
+        await program.methods
+          .initializeConnection()
+          .accounts({
+            connection: connectionAccount,
+            profile: profileAccount,
+            authority: randomUser.publicKey,
+            systemProgram: SystemProgram.programId,
+          })
+          .signers([randomUser])
+          .rpc();
       } catch (error) {
-        expect(error).to.be.an("error");
         expect(error.toString()).to.contain("custom program error: 0x0");
       }
     });
@@ -279,30 +243,25 @@ describe("wordcel", async () => {
       // Test must be run synchronously and in the specified order to avoid attepting to close an account that doesn't exist.
       it("should not allow unauthorized closing of connection", async () => {
         const closeUser = anchor.web3.Keypair.generate();
-        const tx = await program.methods
-          .closeConnection()
-          .accounts({
-            connection: connectionAccount,
-            profile: profileAccount,
-            authority: closeUser.publicKey,
-            systemProgram: SystemProgram.programId,
-          })
-          .transaction();
-        tx.feePayer = user;
-        tx.recentBlockhash = (
-          await provider.connection.getRecentBlockhash()
-        ).blockhash;
-        tx.sign(closeUser);
         try {
-          await provider.sendAndConfirm(tx);
+          await program.methods
+            .closeConnection()
+            .accounts({
+              connection: connectionAccount,
+              profile: profileAccount,
+              authority: closeUser.publicKey,
+              systemProgram: SystemProgram.programId,
+            })
+            .signers([closeUser])
+            .rpc();
         } catch (error) {
-          expect(error).to.be.an("error");
-          expect(error.toString()).to.contain("custom program error: 0x7d6");
+          const anchorError = AnchorError.parse(error.logs);
+          expect(anchorError.error.errorCode.code).to.equal("ConstraintSeeds");
         }
       });
 
       it("should only allow the user to close the connection", async () => {
-        const tx = await program.methods
+        await program.methods
           .closeConnection()
           .accounts({
             connection: connectionAccount,
@@ -310,13 +269,8 @@ describe("wordcel", async () => {
             authority: randomUser.publicKey,
             systemProgram: SystemProgram.programId,
           })
-          .transaction();
-        tx.feePayer = user;
-        tx.recentBlockhash = (
-          await provider.connection.getRecentBlockhash()
-        ).blockhash;
-        tx.sign(randomUser);
-        await provider.sendAndConfirm(tx);
+          .signers([randomUser])
+          .rpc();
         try {
           await program.account.connection.fetch(connectionAccount);
         } catch (error) {
@@ -324,6 +278,161 @@ describe("wordcel", async () => {
           expect(error.toString()).to.contain("Error: Account does not exist");
         }
       });
+    });
+  });
+
+  describe("Connections V2", async () => {
+    const profileRandomHash = randombytes(32);
+    const [testProfileAccount, _bump] =
+      await anchor.web3.PublicKey.findProgramAddress(
+        [Buffer.from("profile"), profileRandomHash],
+        program.programId
+      );
+    let testUser = anchor.web3.Keypair.generate();
+    const connectionBoxHash = randombytes(32);
+    const connectionBoxSeeds = [
+      Buffer.from("connection_box"),
+      connectionBoxHash,
+    ];
+
+    const connectionSeeds = [
+      Buffer.from("connection"),
+      testUser.publicKey.toBuffer(),
+      testProfileAccount.toBuffer(),
+    ];
+
+    const connectionV2Seeds = [
+      Buffer.from("connection_v2"),
+      testProfileAccount.toBuffer(),
+    ];
+
+    const [connectionBoxAccount, _bump1] =
+      await anchor.web3.PublicKey.findProgramAddress(
+        connectionBoxSeeds,
+        program.programId
+      );
+
+    const [connectionV2Account, _bump2] =
+      await anchor.web3.PublicKey.findProgramAddress(
+        connectionV2Seeds,
+        program.programId
+      );
+
+    const [connectionAccount, _bump3] =
+      await anchor.web3.PublicKey.findProgramAddress(
+        connectionSeeds,
+        program.programId
+      );
+
+    before(async () => {
+      await airdrop(testUser.publicKey);
+      await program.methods
+        .initialize(profileRandomHash)
+        .accounts({
+          profile: testProfileAccount,
+          user: user,
+          invitation: inviteAccount,
+          invitationProgram: invitationProgram.programId,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc();
+    });
+
+    it("should initialize connection box", async () => {
+      await program.methods
+        .initializeConnectionBox(connectionBoxHash)
+        .accounts({
+          connectionBox: connectionBoxAccount,
+          authority: testUser.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([testUser])
+        .rpc();
+      const connectionBoxData = await program.account.connectionBox.fetch(
+        connectionBoxAccount
+      );
+      expect(connectionBoxData.authority.toString()).to.equal(
+        testUser.publicKey.toString()
+      );
+    });
+
+    it("should initialize connections_v2", async () => {
+      await program.methods
+        .initializeConnectionV2()
+        .accounts({
+          connection: connectionV2Account,
+          connectionBox: connectionBoxAccount,
+          profile: testProfileAccount,
+          authority: testUser.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([testUser])
+        .rpc();
+      const connectionV2Data = await program.account.connectionV2.fetch(
+        connectionV2Account
+      );
+      expect(connectionV2Data.connectionBox.toString()).to.equal(
+        connectionBoxAccount.toString()
+      );
+    });
+
+    it("should close connections_v2", async () => {
+      await program.methods
+        .closeConnectionV2()
+        .accounts({
+          connection: connectionV2Account,
+          connectionBox: connectionBoxAccount,
+          profile: testProfileAccount,
+          authority: testUser.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([testUser])
+        .rpc();
+
+      try {
+        await program.account.connectionV2.fetch(connectionV2Account);
+      } catch (error) {
+        expect(error.toString()).to.contain("Error: Account does not exist");
+      }
+    });
+
+    it("should seemelessly migrate connections from v1 to v2", async () => {
+      const connectionV1IX = await program.methods
+        .initializeConnection()
+        .accounts({
+          connection: connectionAccount,
+          profile: testProfileAccount,
+          authority: testUser.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([testUser])
+        .instruction();
+
+      await program.methods
+        .migrateToConnectionv2()
+        .accounts({
+          connectionV1: connectionAccount,
+          connectionV2: connectionV2Account,
+          profile: testProfileAccount,
+          connectionBox: connectionBoxAccount,
+          authority: testUser.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .preInstructions([connectionV1IX])
+        .signers([testUser])
+        .rpc();
+
+      try {
+        await program.account.connection.fetch(connectionAccount);
+      } catch (error) {
+        expect(error.toString()).to.contain("Error: Account does not exist");
+      }
+      const connectionV2Data = await program.account.connectionV2.fetch(
+        connectionV2Account
+      );
+      expect(connectionV2Data.connectionBox.toString()).to.equal(
+        connectionBoxAccount.toString()
+      );
     });
   });
 });

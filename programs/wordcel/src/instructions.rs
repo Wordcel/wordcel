@@ -33,6 +33,44 @@ pub struct Initialize<'info> {
 }
 
 #[derive(Accounts)]
+pub struct TransferProfile<'info> {
+    #[account(
+        mut,
+        seeds = [
+            b"profile".as_ref(),
+            &profile.random_hash
+        ],
+        bump,
+    )]
+    pub profile: Account<'info, Profile>,
+    #[account(
+        owner = invitation_program.key(),
+        seeds = [
+            Invite::PREFIX.as_bytes().as_ref(),
+            authority.key().as_ref()
+        ],
+        seeds::program = invitation_program.key(),
+        bump = invitation.bump
+    )]
+    pub invitation: Account<'info, Invite>,
+    #[account(
+        owner = invitation_program.key(),
+        seeds = [
+            Invite::PREFIX.as_bytes().as_ref(),
+            new_authority.key().as_ref()
+        ],
+        seeds::program = invitation_program.key(),
+        bump = new_authority_invitation.bump
+    )]
+    pub new_authority_invitation: Account<'info, Invite>,
+    #[account(mut)]
+    pub authority: Signer<'info>,
+    pub new_authority: SystemAccount<'info>,
+    pub system_program: Program<'info, System>,
+    pub invitation_program: Program<'info, InvitationProgram>,
+}
+
+#[derive(Accounts)]
 #[instruction(metadata_uri: String, random_hash: [u8;32])]
 pub struct CreatePost<'info> {
     #[account(
@@ -157,6 +195,121 @@ pub struct CloseConnection<'info> {
         close = authority
     )]
     pub connection: Account<'info, Connection>,
+    pub profile: Account<'info, Profile>,
+    #[account(mut)]
+    pub authority: Signer<'info>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+#[instruction(random_hash: [u8; 32])]
+pub struct InitializeConnectionBox<'info> {
+    #[account(
+        init,
+        seeds = [
+           b"connection_box".as_ref(),
+           &random_hash
+        ],
+        bump,
+        payer = authority,
+        space = ConnectionBox::LEN
+    )]
+    pub connection_box: Account<'info, ConnectionBox>,
+    #[account(mut)]
+    pub authority: Signer<'info>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct TranferConnectionBox<'info> {
+    #[account(
+        mut,
+        seeds = [
+           b"connection_box".as_ref(),
+           &connection_box.random_hash
+        ],
+        bump,
+    )]
+    pub connection_box: Account<'info, ConnectionBox>,
+    #[account(mut)]
+    pub authority: Signer<'info>,
+    pub new_authority: SystemAccount<'info>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct InitializeConnectionV2<'info> {
+    #[account(
+        init,
+        seeds = [
+           b"connection_v2".as_ref(),
+           profile.key().as_ref()
+        ],
+        bump,
+        payer = authority,
+        // Don't allow the user to follow themselves
+        constraint = profile.authority.key() != connection_box.authority.key() @ConnectionError::SelfFollow,
+        space = ConnectionV2::LEN
+    )]
+    pub connection: Account<'info, ConnectionV2>,
+    #[account(has_one=authority)]
+    pub connection_box: Account<'info, ConnectionBox>,
+    pub profile: Account<'info, Profile>,
+    #[account(mut)]
+    pub authority: Signer<'info>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct CloseConnectionV2<'info> {
+    #[account(
+        mut,
+        seeds = [
+           b"connection_v2".as_ref(),
+           profile.key().as_ref()
+        ],
+        bump = connection.bump,
+        has_one = connection_box,
+        close = authority
+    )]
+    pub connection: Account<'info, ConnectionV2>,
+    #[account(has_one=authority)]
+    pub connection_box: Account<'info, ConnectionBox>,
+    pub profile: Account<'info, Profile>,
+    #[account(mut)]
+    pub authority: Signer<'info>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct MigrateConnectionToV2<'info> {
+    #[account(
+        mut,
+        seeds = [
+           b"connection".as_ref(),
+           authority.key().as_ref(),
+           profile.key().as_ref()
+        ],
+        bump = connection_v1.bump,
+        has_one = authority,
+        close = authority
+    )]
+    pub connection_v1: Account<'info, Connection>,
+    #[account(
+        init,
+        seeds = [
+           b"connection_v2".as_ref(),
+           profile.key().as_ref()
+        ],
+        bump,
+        payer = authority,
+        // Don't allow the user to follow themselves
+        constraint = profile.authority.key() != connection_box.authority.key() @ConnectionError::SelfFollow,
+        space = ConnectionV2::LEN
+    )]
+    pub connection_v2: Account<'info, ConnectionV2>,
+    #[account(has_one=authority)]
+    pub connection_box: Account<'info, ConnectionBox>,
     pub profile: Account<'info, Profile>,
     #[account(mut)]
     pub authority: Signer<'info>,
