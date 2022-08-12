@@ -396,7 +396,7 @@ describe("wordcel", async () => {
       }
     });
 
-    it("should seemelessly migrate connections from v1 to v2", async () => {
+    it("should allow the user to migrate connections from v1 to v2", async () => {
       const connectionV1IX = await program.methods
         .initializeConnection()
         .accounts({
@@ -433,6 +433,180 @@ describe("wordcel", async () => {
       expect(connectionV2Data.connectionBox.toString()).to.equal(
         connectionBoxAccount.toString()
       );
+      await program.methods
+        .closeConnectionV2()
+        .accounts({
+          connection: connectionV2Account,
+          connectionBox: connectionBoxAccount,
+          profile: testProfileAccount,
+          authority: testUser.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([testUser])
+        .rpc();
+    });
+
+    it("should allow the admin to seemelessly migrate connections from v1 to v2", async () => {
+      const randomUser = anchor.web3.Keypair.generate();
+      await airdrop(randomUser.publicKey);
+
+      const connectionBoxHash = randombytes(32);
+      const connectionBoxSeeds = [
+        Buffer.from("connection_box"),
+        connectionBoxHash,
+      ];
+
+      const connectionSeeds = [
+        Buffer.from("connection"),
+        randomUser.publicKey.toBuffer(),
+        testProfileAccount.toBuffer(),
+      ];
+
+      const connectionV2Seeds = [
+        Buffer.from("connection_v2"),
+        testProfileAccount.toBuffer(),
+      ];
+
+      const [connectionBoxAccount, _bump1] =
+        await anchor.web3.PublicKey.findProgramAddress(
+          connectionBoxSeeds,
+          program.programId
+        );
+
+      const [connectionV2Account, _bump2] =
+        await anchor.web3.PublicKey.findProgramAddress(
+          connectionV2Seeds,
+          program.programId
+        );
+
+      const [connectionAccount, _bump3] =
+        await anchor.web3.PublicKey.findProgramAddress(
+          connectionSeeds,
+          program.programId
+        );
+
+      await program.methods
+        .initializeConnection()
+        .accounts({
+          connection: connectionAccount,
+          profile: testProfileAccount,
+          authority: randomUser.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([randomUser])
+        .rpc();
+
+      await program.methods
+        .migrateToConnectionv2Admin(connectionBoxHash)
+        .accounts({
+          connectionV1: connectionAccount,
+          connectionV2: connectionV2Account,
+          profile: testProfileAccount,
+          connectionBox: connectionBoxAccount,
+          authority: randomUser.publicKey,
+          payer: user,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc();
+
+      try {
+        await program.account.connection.fetch(connectionAccount);
+      } catch (error) {
+        expect(error.toString()).to.contain("Error: Account does not exist");
+      }
+      const connectionBoxData = await program.account.connectionBox.fetch(
+        connectionBoxAccount
+      );
+      expect(connectionBoxData.authority.toString()).to.equal(
+        randomUser.publicKey.toString()
+      );
+
+      const connectionV2Data = await program.account.connectionV2.fetch(
+        connectionV2Account
+      );
+      expect(connectionV2Data.connectionBox.toString()).to.equal(
+        connectionBoxAccount.toString()
+      );
+      await program.methods
+        .closeConnectionV2()
+        .accounts({
+          connection: connectionV2Account,
+          connectionBox: connectionBoxAccount,
+          profile: testProfileAccount,
+          authority: randomUser.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([randomUser])
+        .rpc();
+    });
+
+    it("should not allow anyone other than the admin to seemelessly migrate connections from v1 to v2", async () => {
+      const randomUser = anchor.web3.Keypair.generate();
+      await airdrop(randomUser.publicKey);
+
+      const connectionBoxHash = randombytes(32);
+      const connectionBoxSeeds = [
+        Buffer.from("connection_box"),
+        connectionBoxHash,
+      ];
+
+      const connectionSeeds = [
+        Buffer.from("connection"),
+        randomUser.publicKey.toBuffer(),
+        testProfileAccount.toBuffer(),
+      ];
+
+      const connectionV2Seeds = [
+        Buffer.from("connection_v2"),
+        testProfileAccount.toBuffer(),
+      ];
+
+      const [connectionBoxAccount, _bump1] =
+        await anchor.web3.PublicKey.findProgramAddress(
+          connectionBoxSeeds,
+          program.programId
+        );
+
+      const [connectionV2Account, _bump2] =
+        await anchor.web3.PublicKey.findProgramAddress(
+          connectionV2Seeds,
+          program.programId
+        );
+      const [connectionAccount, _bump3] =
+        await anchor.web3.PublicKey.findProgramAddress(
+          connectionSeeds,
+          program.programId
+        );
+
+      await program.methods
+        .initializeConnection()
+        .accounts({
+          connection: connectionAccount,
+          profile: testProfileAccount,
+          authority: randomUser.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([randomUser])
+        .rpc();
+
+      try {
+        await program.methods
+          .migrateToConnectionv2Admin(connectionBoxHash)
+          .accounts({
+            connectionV1: connectionAccount,
+            connectionV2: connectionV2Account,
+            profile: testProfileAccount,
+            connectionBox: connectionBoxAccount,
+            authority: randomUser.publicKey,
+            payer: testUser.publicKey,
+            systemProgram: SystemProgram.programId,
+          })
+          .signers([testUser])
+          .rpc();
+      } catch (e) {
+        const { error } = AnchorError.parse(e.logs);
+        expect(error.errorCode.code).to.equal("UnAuthorizedAccess");
+      }
     });
   });
 });

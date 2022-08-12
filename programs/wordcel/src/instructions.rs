@@ -1,6 +1,7 @@
 use crate::*;
 use invite::program::Invite as InvitationProgram;
 use invite::Invite;
+use std::str::FromStr;
 
 #[derive(Accounts)]
 #[instruction(random_hash: [u8;32])]
@@ -314,4 +315,64 @@ pub struct MigrateConnectionToV2<'info> {
     #[account(mut)]
     pub authority: Signer<'info>,
     pub system_program: Program<'info, System>,
+}
+
+// NOTE: This instruction doesn't close the existing connection, but merely copies it over to
+// connection v2.
+// This is added so that the admin can easily migrate the conenctions if they chose to by paying
+// for it and this helps us offer a better user experience.
+
+#[derive(Accounts)]
+#[instruction(random_hash: [u8; 32])]
+pub struct MigrateConnectionToV2Admin<'info> {
+    #[account(
+        seeds = [
+           b"connection".as_ref(),
+           authority.key().as_ref(),
+           profile.key().as_ref()
+        ],
+        bump = connection_v1.bump,
+        has_one = authority,
+    )]
+    pub connection_v1: Account<'info, Connection>,
+    #[account(
+        init,
+        seeds = [
+           b"connection_v2".as_ref(),
+           profile.key().as_ref()
+        ],
+        bump,
+        payer = payer,
+        // Don't allow the user to follow themselves
+        constraint = profile.authority.key() != authority.key() @ConnectionError::SelfFollow,
+        space = ConnectionV2::LEN
+    )]
+    pub connection_v2: Account<'info, ConnectionV2>,
+    #[account(
+        init,
+        seeds = [
+           b"connection_box".as_ref(),
+           &random_hash
+        ],
+        bump,
+        payer = payer,
+        space = ConnectionBox::LEN
+    )]
+    pub connection_box: Account<'info, ConnectionBox>,
+    pub profile: Account<'info, Profile>,
+    pub authority: SystemAccount<'info>,
+    #[account(mut, constraint = is_admin(payer.key()) @AdminError::UnAuthorizedAccess)]
+    pub payer: Signer<'info>,
+    pub system_program: Program<'info, System>,
+}
+
+fn is_admin(key: Pubkey) -> bool {
+    let admin_keys: Vec<Pubkey> = [
+        // Wordcel Admin
+        "8f2yAM5ufEC9WgHYdAxeDgpZqE1B1Q47CciPRZaDN3jc",
+    ]
+    .iter()
+    .map(|k| Pubkey::from_str(k).unwrap())
+    .collect();
+    admin_keys.contains(&key)
 }

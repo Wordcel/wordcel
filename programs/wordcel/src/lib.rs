@@ -10,7 +10,7 @@ use events::*;
 use instructions::*;
 use state::*;
 
-#[cfg(not(any(feature = ": mainnet", feature = "devnet")))]
+#[cfg(not(any(feature = "mainnet", feature = "devnet")))]
 declare_id!("v4enuof3drNvU2Y3b5m7K62hMq3QUP6qQSV2jjxAhkp");
 
 #[cfg(feature = "devnet")]
@@ -142,6 +142,24 @@ pub mod wordcel {
     }
 
     pub fn migrate_to_connectionv2(ctx: Context<MigrateConnectionToV2>) -> Result<()> {
+        let connection = &mut ctx.accounts.connection_v2;
+        connection.bump = *ctx.bumps.get("connection_v2").unwrap();
+        connection.profile = *ctx.accounts.profile.to_account_info().key;
+        connection.connection_box = *ctx.accounts.connection_box.to_account_info().key;
+        Ok(())
+    }
+
+    pub fn migrate_to_connectionv2_admin(
+        ctx: Context<MigrateConnectionToV2Admin>,
+        random_hash: [u8; 32],
+    ) -> Result<()> {
+        // Set up connection box
+        let connection_box = &mut ctx.accounts.connection_box;
+        connection_box.bump = *ctx.bumps.get("connection_box").unwrap();
+        connection_box.random_hash = random_hash;
+        connection_box.authority = *ctx.accounts.authority.to_account_info().key;
+
+        // Set connection
         let connection = &mut ctx.accounts.connection_v2;
         connection.bump = *ctx.bumps.get("connection_v2").unwrap();
         connection.profile = *ctx.accounts.profile.to_account_info().key;
