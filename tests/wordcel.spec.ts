@@ -1,12 +1,12 @@
 import * as anchor from '@project-serum/anchor';
-import {Program} from '@project-serum/anchor';
-import {Wordcel} from '../target/types/wordcel';
-import {expect} from 'chai';
-import {PublicKey} from '@solana/web3.js';
+import { Program } from '@project-serum/anchor';
+import { Wordcel } from '../target/types/wordcel';
+import { expect } from 'chai';
+import { PublicKey } from '@solana/web3.js';
 import randombytes from 'randombytes';
-import {getInviteAccount, invitationProgram} from './utils/invite';
-import {airdrop} from './utils';
-const {SystemProgram} = anchor.web3;
+import { getInviteAccount, invitationProgram } from './utils/invite';
+import { airdrop } from './utils';
+const { SystemProgram } = anchor.web3;
 const provider = anchor.getProvider();
 
 const program = anchor.workspace.Wordcel as Program<Wordcel>;
@@ -52,14 +52,26 @@ describe('wordcel', async () => {
             const postSeeds = [Buffer.from("post"), randomHash];
             const [postAccount, _] = await anchor.web3.PublicKey.findProgramAddress(postSeeds, program.programId);
             const metadataUri = "https://gist.githubusercontent.com/abishekk92/10593977/raw/589238c3d48e654347d6cbc1e29c1e10dadc7cea/monoid.md";
-            await program.methods.createPost(metadataUri, randomHash).accounts({
-                post: postAccount,
-                profile: profileAccount,
-                authority: user,
-                systemProgram: SystemProgram.programId,
-            }).rpc();
+            let listener = null;
+            let [event, slot] = await new Promise(async (resolve) => {
+                listener = program.addEventListener('NewPost', async (event, slot) => {
+                    resolve([event, slot]);
+                });
+                // Create Post
+                await program.methods.createPost(metadataUri, randomHash).accounts({
+                    post: postAccount,
+                    profile: profileAccount,
+                    authority: user,
+                    systemProgram: SystemProgram.programId,
+                }).rpc();
+            })
+            await program.removeEventListener(listener);
+
             const post = await program.account.post.fetch(postAccount);
             expect(post.metadataUri).to.equal(metadataUri);
+            expect(event.post.toString()).to.equal(postAccount.toString());
+            expect(event.profile.toString()).to.equal(post.profile.toString());
+            expect(slot).to.be.above(0);
             onePostAccount = postAccount;
         });
 
@@ -136,18 +148,30 @@ describe('wordcel', async () => {
         });
 
         it("should create a connection", async () => {
-            const tx = await program.methods.initializeConnection().accounts({
-                connection: connectionAccount,
-                profile: profileAccount,
-                authority: randomUser.publicKey,
-                systemProgram: SystemProgram.programId
-            }).transaction();
-            tx.feePayer = user;
-            tx.recentBlockhash = (await provider.connection.getRecentBlockhash()).blockhash;
-            tx.sign(randomUser);
-            await provider.sendAndConfirm(tx);
+            let listener = null;
+            let [event, slot] = await new Promise(async (resolve) => {
+                listener = program.addEventListener('NewFollower', async (event, slot) => {
+                    resolve([event, slot]);
+                });
+                // Initialize Connection
+                const tx = await program.methods.initializeConnection().accounts({
+                    connection: connectionAccount,
+                    profile: profileAccount,
+                    authority: randomUser.publicKey,
+                    systemProgram: SystemProgram.programId
+                }).transaction();
+                tx.feePayer = user;
+                tx.recentBlockhash = (await provider.connection.getRecentBlockhash()).blockhash;
+                tx.sign(randomUser);
+                await provider.sendAndConfirm(tx);
+            })
+            await program.removeEventListener(listener);
+
             const connection = await program.account.connection.fetch(connectionAccount);
             expect(connection.profile.toString()).to.equal(profileAccount.toString());
+            expect(event.user.toString()).to.equal(connection.authority.toString());
+            expect(event.followed.toString()).to.equal(connectionAccount.toString());
+            expect(slot).to.be.above(0);
         });
 
         describe("Close Connection", () => {
