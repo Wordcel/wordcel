@@ -1,10 +1,12 @@
 use anchor_lang::prelude::*;
 
 mod error;
+mod events;
 mod instructions;
 mod state;
 
 use error::*;
+use events::*;
 use instructions::*;
 use state::*;
 
@@ -43,6 +45,14 @@ pub mod wordcel {
         post.bump = *ctx.bumps.get("post").unwrap();
         post.metadata_uri = metadata_uri;
         post.profile = *ctx.accounts.profile.to_account_info().key;
+        let clock = Clock::get()?;
+
+        emit!(NewPost {
+            post: *ctx.accounts.post.to_account_info().key,
+            profile: *ctx.accounts.profile.to_account_info().key,
+            created_at: clock.unix_timestamp
+        });
+
         Ok(())
     }
 
@@ -78,6 +88,15 @@ pub mod wordcel {
         connection.bump = *ctx.bumps.get("connection").unwrap();
         connection.profile = *ctx.accounts.profile.to_account_info().key;
         connection.authority = *ctx.accounts.authority.to_account_info().key;
+
+        let clock = Clock::get()?;
+
+        emit!(NewFollower {
+            user: *ctx.accounts.authority.to_account_info().key,
+            followed: *ctx.accounts.connection.to_account_info().key,
+            created_at: clock.unix_timestamp
+        });
+
         Ok(())
     }
 

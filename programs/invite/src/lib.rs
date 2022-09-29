@@ -118,6 +118,8 @@ impl Invite {
             "8kgbAgt8oedfprQ9LWekUh6rbY264Nv75eunHPpkbYGX",
             // Paarug
             "Gs3xD3V6We8H62pM9fkufKs644KWz1pts4EUn3bAR6Yb",
+            // Vijay
+            "9psZBS7GHNrFxADh93Gv1Qnr9TTCP9GAdfrvDFzgLJUf",
         ]
         .iter()
         .map(|k| Pubkey::from_str(k).unwrap())
