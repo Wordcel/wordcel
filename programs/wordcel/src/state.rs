@@ -22,19 +22,8 @@ pub struct Post {
     pub bump: u8,
     pub random_hash: [u8; 32],
 
-    // TODO:
-    // Namespace created per project.
-    // Potentially monetize the platform by creating artificial scarcity of namespaces.
-    // namespace: Pubkey,
-
     //Comments are just replies
     pub reply_to: Option<Pubkey>,
-    // TODO:
-    //reshares are retweets or just share
-    // Reply with reshare is qoute tweet
-    // Resharing is very ineffective if done this way and without a reader, there is no strong
-    // incentive to implement reshares yet
-    // pub reshare: bool,
 }
 
 impl Post {
