@@ -6,3 +6,4 @@ target
 node_modules
 test_ledger/
 .goki/
+scratch/

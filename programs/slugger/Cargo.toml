@@ -1,0 +1,25 @@
+[package]
+name = "slugger"
+version = "0.1.0"
+description = "Created with Anchor"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "slugger"
+
+[features]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+default = ["wordcel"]
+devnet = ["wordcel", "wordcel/devnet"]
+mainnet = ["wordcel", "wordcel/mainnet"]
+
+[profile.release]
+overflow-checks = true
+
+[dependencies]
+anchor-lang = "0.24.2"
+wordcel = { path = "../wordcel", features = ["cpi"], optional = true }
