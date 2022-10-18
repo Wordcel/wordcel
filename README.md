@@ -1,7 +1,8 @@
 # wordcel
 
 Core Protocol, comprising of on-chain programs, IDL and tests.
-## Account model https://github.com/harsh4786/wordcel/blob/master/wordcel_account_model.png
+## Account model 
+ ![worcel accounts model] (https://github.com/harsh4786/wordcel/blob/master/wordcel_account_model.png)
   
 
 ## Users can
