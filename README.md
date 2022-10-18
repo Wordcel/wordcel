@@ -9,7 +9,7 @@ Core Protocol, comprising of on-chain programs, IDL and tests.
 
 1. Create a publication
     To create a publication users have to create a profile, give a suitable name of their choice. The client calls the 
-    ```initialize``` ix of the on-chain program to create a profile account and initialize it with user data.
+    [```initialize```](https://github.com/Wordcel/wordcel/blob/master/programs/wordcel/src/lib.rs#L26) ix of the on-chain program to create a profile account and initialize it with user data.
   
 2. Create a post in a publication
    The post is created after the content gets published on Arweave, the ```create_post``` instruction is called which 
