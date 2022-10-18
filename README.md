@@ -12,10 +12,9 @@ Core Protocol, comprising of on-chain programs, IDL and tests.
     [```initialize```](https://github.com/Wordcel/wordcel/blob/master/programs/wordcel/src/lib.rs#L26) ix of the on-chain program to create a profile account and initialize it with user data.
   
 2. Create a post in a publication
-   The post is created after the content gets published on Arweave, the ```create_post``` instruction is called which 
+   The post is created after the content gets published on Arweave, the [```create_post```](https://github.com/Wordcel/wordcel/blob/master/programs/wordcel/src/lib.rs#L34) instruction is called which 
    creates the post account on-chain and stores the Arweave metadata URI.
-   ``` ```
-3. Update a post in a publication
+3. Update a post in a publication. The client calls the [```update_post```](https://github.com/Wordcel/wordcel/blob/master/programs/wordcel/src/lib.rs#L59) ix to update the post.
 4. Create a subscription
 5. Use the subscription to subscribe to a publication.
 6. Unsubscribe from a publication.
