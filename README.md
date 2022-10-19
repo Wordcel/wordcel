@@ -1,4 +1,4 @@
-# wordcel
+# Wordcel
 
 Core Protocol, comprising of on-chain programs, IDL and tests.
 ## Account model 
