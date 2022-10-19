@@ -17,3 +17,5 @@ Core Protocol, comprising of on-chain programs, IDL and tests.
 3. Update a post in a publication. The client calls the [```update_post```](https://github.com/Wordcel/wordcel/blob/master/programs/wordcel/src/lib.rs#L59) ix to update the post. The program also allows users to comment on posts via the [```comment```](https://github.com/Wordcel/wordcel/blob/master/programs/wordcel/src/lib.rs#L68) instruction
 4. Create a follow action with [```create_connection```](https://github.com/Wordcel/wordcel/blob/master/programs/wordcel/src/lib.rs#L86) instruction
 5. Unfollow a user by closing the same above connection see [```close_connection```](https://github.com/Wordcel/wordcel/blob/master/programs/wordcel/src/lib.rs#L103) 
+The key feature of how posts are managed is the usage of random hashes. Random hashes are randomly generated on 
+the client side and these are used as seeds of the [```post account```](https://github.com/Wordcel/wordcel/blob/master/programs/wordcel/src/state.rs#L23) this allows for a profile account to be associated with n no. of posts as the random hashes are very less likely to collide.
