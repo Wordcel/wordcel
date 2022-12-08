@@ -15,7 +15,8 @@
     "idl:upgrade:wordcel:mainnet": "anchor idl upgrade -f target/idl/wordcel.json --provider.cluster mainnet --provider.wallet ~/.config/solana/wordcel_mainnet.json EXzAYHZ8xS6QJ6xGRsdKZXixoQBLsuMbmwJozm85jHp",
     "idl:upgrade:invite:mainnet": "anchor idl upgrade -f target/idl/invite.json --provider.cluster mainnet --provider.wallet ~/.config/solana/wordcel_mainnet.json Fc4q6ttyDHr11HjMHRvanG9SskeR24Q62egdwsUUMHLf",
     "idl:upgrade:wordcel:devnet": "anchor idl upgrade -f target/idl/wordcel.json --provider.cluster devnet --provider.wallet ~/.config/solana/wordcel_admin.json D9JJgeRf2rKq5LNMHLBMb92g4ZpeMgCyvZkd7QKwSCzg",
-    "idl:upgrade:invite:devnet": "anchor idl upgrade -f target/idl/invite.json --provider.cluster devnet --provider.wallet ~/.config/solana/wordcel_admin.json 6G5x4Es2YZYB5e4QkFJN88TrfLABkYEQpkUH5Gob9Cut"
+    "idl:upgrade:invite:devnet": "anchor idl upgrade -f target/idl/invite.json --provider.cluster devnet --provider.wallet ~/.config/solana/wordcel_admin.json 6G5x4Es2YZYB5e4QkFJN88TrfLABkYEQpkUH5Gob9Cut",
+    "anchor:publish:invite:mainnet": "anchor publish invite --provider.cluster mainnet --provider.wallet ~/.config/solana/wordcel_mainnet.json -- --features mainnet"
   },
   "dependencies": {
     "@bundlr-network/client": "^0.5.12",
