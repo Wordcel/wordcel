@@ -18,25 +18,31 @@ pub mod invite {
 
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
         let invite_account = &mut ctx.accounts.invite_account;
-        invite_account.bump = *ctx.bumps.get("invite_account").unwrap();
+        invite_account.bump = ctx.bumps["invite_account"];
         invite_account.authority = *ctx.accounts.authority.to_account_info().key;
         invite_account.invited_by = *ctx.accounts.payer.to_account_info().key;
-        invite_account.invites_left = Invite::MAX_TO_GIVE;
+        invite_account.invites_left = Invite::NUM_INITIAL_INVITES;
         invite_account.invites_sent = 0;
         Ok(())
     }
 
     pub fn send_invite(ctx: Context<SendInvite>) -> Result<()> {
         let to_invite_account = &mut ctx.accounts.to_invite_account;
-        to_invite_account.bump = *ctx.bumps.get("to_invite_account").unwrap();
+        to_invite_account.bump = ctx.bumps["to_invite_account"];
         to_invite_account.authority = *ctx.accounts.to.to_account_info().key;
         to_invite_account.invited_by = *ctx.accounts.authority.to_account_info().key;
-        to_invite_account.invites_left = Invite::MAX_TO_GIVE;
+        to_invite_account.invites_left = Invite::NUM_INITIAL_INVITES;
         to_invite_account.invites_sent = 0;
 
         let invite_account = &mut ctx.accounts.invite_account;
         invite_account.invites_sent = invite_account.invites_sent.checked_add(1).unwrap();
         invite_account.invites_left = invite_account.invites_left.checked_sub(1).unwrap();
+        Ok(())
+    }
+
+    pub fn claim_invite(ctx: Context<ClaimInvites>) -> Result<()> {
+        let invite_account = &mut ctx.accounts.invite_account;
+        invite_account.invites_left = invite_account.invites_left.checked_add(4).unwrap();
         Ok(())
     }
 }
@@ -93,6 +99,24 @@ pub struct SendInvite<'info> {
     pub system_program: Program<'info, System>,
 }
 
+#[derive(Accounts)]
+pub struct ClaimInvites<'info> {
+    #[account(
+        mut,
+        has_one = authority,
+        seeds = [
+            Invite::PREFIX.as_bytes().as_ref(),
+            authority.key().as_ref()
+        ],
+        bump = invite_account.bump,
+        constraint = invite_account.invites_left <= 1 @InviteError::IneligibleClaim,
+    )]
+    pub invite_account: Account<'info, Invite>,
+    #[account(mut)]
+    pub authority: Signer<'info>,
+    pub system_program: Program<'info, System>,
+}
+
 #[account]
 #[derive(Default)]
 pub struct Invite {
@@ -105,7 +129,7 @@ pub struct Invite {
 
 impl Invite {
     pub const PREFIX: &'static str = "invite";
-    pub const MAX_TO_GIVE: u8 = 2;
+    pub const NUM_INITIAL_INVITES: u8 = 2;
     pub const LEN: usize = 8 + size_of::<Self>();
 
     fn is_whitelisted(key: Pubkey) -> bool {
@@ -131,5 +155,7 @@ impl Invite {
 #[error_code]
 pub enum InviteError {
     NoInvitesLeft,
+    #[msg("Invites can be only claimed after existing invites are used")]
+    IneligibleClaim,
     UnAuthorizedInitialization,
 }
