@@ -4,7 +4,6 @@ import { Wordcel } from "../target/types/wordcel";
 import { expect } from "chai";
 import { PublicKey } from "@solana/web3.js";
 import randombytes from "randombytes";
-import { getInviteAccount, invitationProgram } from "./utils/invite";
 import { airdrop } from "./utils";
 const { SystemProgram } = anchor.web3;
 const provider = anchor.getProvider();
@@ -20,29 +19,14 @@ describe("wordcel", async () => {
     program.programId
   );
   let onePostAccount: PublicKey;
-  let inviteAccount: PublicKey;
 
   describe("Profile", async () => {
     it("should initialize", async () => {
-      // Initialize Invitation Account
-      inviteAccount = await getInviteAccount(user);
-      await invitationProgram.methods
-        .initialize()
-        .accounts({
-          inviteAccount: inviteAccount,
-          authority: user,
-          payer: user,
-          systemProgram: SystemProgram.programId,
-        })
-        .rpc();
-
       await program.methods
         .initialize(randomHash)
         .accounts({
           profile: profileAccount,
           user: user,
-          invitation: inviteAccount,
-          invitationProgram: invitationProgram.programId,
           systemProgram: SystemProgram.programId,
         })
         .rpc();
@@ -111,14 +95,11 @@ describe("wordcel", async () => {
           profileSeed,
           program.programId
         );
-      // Initialize Invitation Account
       await program.methods
         .initialize(randomHash)
         .accounts({
           profile: newProfileAccount,
           user: user,
-          invitation: inviteAccount,
-          invitationProgram: invitationProgram.programId,
           systemProgram: SystemProgram.programId,
         })
         .rpc();
