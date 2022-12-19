@@ -31,6 +31,12 @@ pub mod wordcel {
         Ok(())
     }
 
+    pub fn transfer_profile(ctx: Context<TransferProfile>) -> Result<()> {
+        let profile = &mut ctx.accounts.profile;
+        profile.authority = *ctx.accounts.new_authority.to_account_info().key;
+        Ok(())
+    }
+
     pub fn create_post(
         ctx: Context<CreatePost>,
         metadata_uri: String,
@@ -83,6 +89,7 @@ pub mod wordcel {
         Ok(())
     }
 
+    // Marked for deprecation
     pub fn initialize_connection(ctx: Context<InitializeConnection>) -> Result<()> {
         let connection = &mut ctx.accounts.connection;
         connection.bump = *ctx.bumps.get("connection").unwrap();
@@ -100,7 +107,63 @@ pub mod wordcel {
         Ok(())
     }
 
+    // Marked for deprecation
     pub fn close_connection(_ctx: Context<CloseConnection>) -> Result<()> {
+        Ok(())
+    }
+
+    pub fn initialize_connection_v2(ctx: Context<InitializeConnectionV2>) -> Result<()> {
+        let connection = &mut ctx.accounts.connection;
+        connection.bump = *ctx.bumps.get("connection").unwrap();
+        connection.profile = *ctx.accounts.profile.to_account_info().key;
+        connection.connection_box = *ctx.accounts.connection_box.to_account_info().key;
+        Ok(())
+    }
+
+    pub fn close_connection_v2(_ctx: Context<CloseConnectionV2>) -> Result<()> {
+        Ok(())
+    }
+
+    pub fn initialize_connection_box(
+        ctx: Context<InitializeConnectionBox>,
+        random_hash: [u8; 32],
+    ) -> Result<()> {
+        let connection_box = &mut ctx.accounts.connection_box;
+        connection_box.bump = *ctx.bumps.get("connection_box").unwrap();
+        connection_box.random_hash = random_hash;
+        connection_box.authority = *ctx.accounts.authority.to_account_info().key;
+        Ok(())
+    }
+
+    pub fn transfer_connection_box(ctx: Context<TranferConnectionBox>) -> Result<()> {
+        let connection_box = &mut ctx.accounts.connection_box;
+        connection_box.authority = *ctx.accounts.new_authority.to_account_info().key;
+        Ok(())
+    }
+
+    pub fn migrate_to_connectionv2(ctx: Context<MigrateConnectionToV2>) -> Result<()> {
+        let connection = &mut ctx.accounts.connection_v2;
+        connection.bump = *ctx.bumps.get("connection_v2").unwrap();
+        connection.profile = *ctx.accounts.profile.to_account_info().key;
+        connection.connection_box = *ctx.accounts.connection_box.to_account_info().key;
+        Ok(())
+    }
+
+    pub fn migrate_to_connectionv2_admin(
+        ctx: Context<MigrateConnectionToV2Admin>,
+        random_hash: [u8; 32],
+    ) -> Result<()> {
+        // Set up connection box
+        let connection_box = &mut ctx.accounts.connection_box;
+        connection_box.bump = *ctx.bumps.get("connection_box").unwrap();
+        connection_box.random_hash = random_hash;
+        connection_box.authority = *ctx.accounts.authority.to_account_info().key;
+
+        // Set connection
+        let connection = &mut ctx.accounts.connection_v2;
+        connection.bump = *ctx.bumps.get("connection_v2").unwrap();
+        connection.profile = *ctx.accounts.profile.to_account_info().key;
+        connection.connection_box = *ctx.accounts.connection_box.to_account_info().key;
         Ok(())
     }
 }

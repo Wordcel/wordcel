@@ -41,3 +41,27 @@ pub struct Connection {
 impl Connection {
     pub const LEN: usize = 8 + size_of::<Self>();
 }
+
+#[account]
+#[derive(Default)]
+pub struct ConnectionBox {
+    pub authority: Pubkey,
+    pub random_hash: [u8; 32],
+    pub bump: u8,
+}
+
+impl ConnectionBox {
+    pub const LEN: usize = 8 + size_of::<Self>();
+}
+
+#[account]
+#[derive(Default)]
+pub struct ConnectionV2 {
+    pub profile: Pubkey,
+    pub connection_box: Pubkey,
+    pub bump: u8,
+}
+
+impl ConnectionV2 {
+    pub const LEN: usize = 8 + size_of::<Self>();
+}

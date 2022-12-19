@@ -9,3 +9,8 @@ pub enum PostError {
 pub enum ConnectionError {
     SelfFollow,
 }
+
+#[error_code]
+pub enum AdminError {
+    UnAuthorizedAccess,
+}
