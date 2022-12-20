@@ -21,6 +21,7 @@ declare_id!("EXzAYHZ8xS6QJ6xGRsdKZXixoQBLsuMbmwJozm85jHp");
 
 #[program]
 pub mod wordcel {
+
     use super::*;
 
     pub fn initialize(ctx: Context<Initialize>, random_hash: [u8; 32]) -> Result<()> {
@@ -103,4 +104,32 @@ pub mod wordcel {
     pub fn close_connection(_ctx: Context<CloseConnection>) -> Result<()> {
         Ok(())
     }
+
+    pub fn create_editor(ctx: Context<CreateEditor>) -> Result<()> {
+        let editor = &mut ctx.accounts.editor;
+        editor.bump = ctx.bumps["editor"];
+        editor.host_profile = *ctx.accounts.host_profile.to_account_info().key;
+        editor.editor_profile = *ctx.accounts.editor_profile.to_account_info().key;
+
+        let clock = Clock::get()?;
+
+        emit!(NewEditor {
+            host_profile: *ctx.accounts.host_profile.to_account_info().key,
+            editor_pda: *ctx.accounts.editor.to_account_info().key,
+            editor_key: ctx.accounts.editor_profile.authority,
+            created_at: clock.unix_timestamp
+        });
+
+        Ok(())
+    }
+
+    pub fn remove_editor(_ctx: Context<RemoveEditor>) -> Result<()> {
+        Ok(())
+    }
+
+    // pub fn post_as_editor(ctx: Context<PostAsEditor>) -> Result<()> {
+    //     let post = &mut ctx.accounts.post;
+    //     post.profile = *ctx.accounts.host_profile.to_account_info().key;
+    //     Ok(())
+    // }
 }

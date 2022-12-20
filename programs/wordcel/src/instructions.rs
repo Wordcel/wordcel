@@ -20,6 +20,103 @@ pub struct Initialize<'info> {
 }
 
 #[derive(Accounts)]
+pub struct CreateEditor<'info> {
+    #[account(
+        init,
+        seeds = [
+            b"editor".as_ref(),
+            host_profile.authority.key().as_ref(),
+            editor_profile.authority.key().as_ref()
+        ],
+        bump,
+        payer = authority,
+        space = Editor::LEN
+    )]
+    pub editor: Account<'info, Editor>,
+    #[account(has_one = authority)]
+    pub host_profile: Account<'info, Profile>,
+    pub editor_profile: Account<'info, Profile>,
+    #[account(mut)]
+    pub authority: Signer<'info>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct RemoveEditor<'info> {
+    #[account(
+        mut,
+        seeds = [
+            b"editor".as_ref(),
+            host_profile.authority.key().as_ref(),
+            editor_profile.authority.key().as_ref()
+        ],
+        bump = editor.bump,
+        close = authority,
+    )]
+    pub editor: Account<'info, Editor>,
+    #[account(has_one = authority)]
+    pub host_profile: Account<'info, Profile>,
+    pub editor_profile: Account<'info, Profile>,
+    #[account(mut)]
+    pub authority: Signer<'info>,
+    pub system_program: Program<'info, System>,
+}
+
+// This would prevent the editor from updating the post
+// Though this is a very likely scenario.
+
+// #[derive(Accounts)]
+// pub struct PostAsEditor<'info> {
+//     // Checks if the original profile was supplied and if the profile authority is the signer
+//     #[account(
+//         has_one = authority,
+//         seeds = [
+//             b"profile".as_ref(),
+//             &editor_profile.random_hash
+//         ],
+//         bump = editor_profile.bump
+//     )]
+//     pub editor_profile: Account<'info, Profile>,
+
+//     // Checks if a post was supplied and it is part of the supplied profile.
+//     #[account(
+//         mut,
+//         constraint = post.profile == editor_profile.to_account_info().key(),
+//         seeds = [
+//             b"post".as_ref(),
+//             &post.random_hash
+//         ],
+//         bump = post.bump
+//     )]
+//     pub post: Account<'info, Post>,
+
+//     #[account(
+//         seeds = [
+//             b"profile".as_ref(),
+//             &host_profile.random_hash
+//         ],
+//         bump = host_profile.bump
+//     )]
+//     pub host_profile: Account<'info, Profile>,
+
+//     #[account(
+//         has_one = host_profile,
+//         seeds = [
+//             b"editor".as_ref(),
+//             host_profile.authority.key().as_ref(),
+//             editor_profile.authority.key().as_ref()
+//         ],
+//         bump = editor.bump
+//     )]
+//     pub editor: Account<'info, Editor>,
+
+//     #[account(mut)]
+//     pub authority: Signer<'info>,
+
+//     pub system_program: Program<'info, System>,
+// }
+
+#[derive(Accounts)]
 #[instruction(metadata_uri: String, random_hash: [u8;32])]
 pub struct CreatePost<'info> {
     #[account(

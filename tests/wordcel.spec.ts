@@ -35,6 +35,29 @@ describe("wordcel", async () => {
     });
   });
 
+  describe("Editor", async () => {
+    before(async () => {
+      //set up profile 1
+      //set up profile 2
+      //set up Editor
+      //set up Post
+      //post as editor
+    });
+
+    it("should initialize", async () => {
+      await program.methods
+        .initialize(randomHash)
+        .accounts({
+          profile: profileAccount,
+          user: user,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc();
+      const data = await program.account.profile.fetch(profileAccount);
+      expect(data.authority.toString()).to.equal(user.toString());
+    });
+  });
+
   describe("Post", async () => {
     it("should create a new post", async () => {
       const randomHash = randombytes(32);

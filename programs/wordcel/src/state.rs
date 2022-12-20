@@ -41,3 +41,15 @@ pub struct Connection {
 impl Connection {
     pub const LEN: usize = 8 + size_of::<Self>();
 }
+
+#[account]
+#[derive(Default)]
+pub struct Editor {
+    pub host_profile: Pubkey,
+    pub editor_profile: Pubkey,
+    pub bump: u8,
+}
+
+impl Editor {
+    pub const LEN: usize = 8 + size_of::<Self>();
+}
