@@ -37,9 +37,7 @@ pub mod wordcel {
         metadata_uri: String,
         random_hash: [u8; 32],
     ) -> Result<()> {
-        if metadata_uri.len() > MAX_LEN_URI {
-            return Err(error!(PostError::URITooLarge));
-        }
+        require_gt!(metadata_uri.len(), MAX_LEN_URI, PostError::URITooLarge);
 
         let post = &mut ctx.accounts.post;
         post.random_hash = random_hash;
@@ -58,9 +56,8 @@ pub mod wordcel {
     }
 
     pub fn update_post(ctx: Context<UpdatePost>, metadata_uri: String) -> Result<()> {
-        if metadata_uri.len() > MAX_LEN_URI {
-            return Err(error!(PostError::URITooLarge));
-        }
+        require_gt!(metadata_uri.len(), MAX_LEN_URI, PostError::URITooLarge);
+
         let post = &mut ctx.accounts.post;
         post.metadata_uri = metadata_uri;
         Ok(())
@@ -71,9 +68,7 @@ pub mod wordcel {
         metadata_uri: String,
         random_hash: [u8; 32],
     ) -> Result<()> {
-        if metadata_uri.len() > MAX_LEN_URI {
-            return Err(error!(PostError::URITooLarge));
-        }
+        require_gt!(metadata_uri.len(), MAX_LEN_URI, PostError::URITooLarge);
 
         let post = &mut ctx.accounts.post;
         post.random_hash = random_hash;
@@ -127,9 +122,11 @@ pub mod wordcel {
         Ok(())
     }
 
-    // pub fn post_as_editor(ctx: Context<PostAsEditor>) -> Result<()> {
-    //     let post = &mut ctx.accounts.post;
-    //     post.profile = *ctx.accounts.host_profile.to_account_info().key;
-    //     Ok(())
-    // }
+    pub fn update_post_as_editor(ctx: Context<PostAsEditor>, metadata_uri: String) -> Result<()> {
+        require_gt!(metadata_uri.len(), MAX_LEN_URI, PostError::URITooLarge);
+
+        let post = &mut ctx.accounts.post;
+        post.profile = *ctx.accounts.host_profile.to_account_info().key;
+        Ok(())
+    }
 }
