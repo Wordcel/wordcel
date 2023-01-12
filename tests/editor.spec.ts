@@ -121,6 +121,52 @@ describe("Editor", async () => {
     }
   });
 
+  it("should not allow unauthorized post creation as editor", async () => {
+    const editorUser = anchor.web3.Keypair.generate();
+    const editorUser_anchor_wallet = new anchor.Wallet(editorUser);
+    await airdrop(editorUser.publicKey);
+
+    // Set up editorUser profile
+    const editorUserProfile = await setupProfile(editorUser.publicKey, program);
+    const editorUserProfileAccount = editorUserProfile.profileAccount;
+    const editor_profile_tx = editorUserProfile.profileTx;
+    await editorUser_anchor_wallet.signTransaction(editor_profile_tx);
+    await provider.sendAndConfirm(editor_profile_tx, [editorUser]);
+
+    const postRandomHash = randombytes(32);
+    const metadataUri =
+      "https://gist.githubusercontent.com/abishekk92/10593977/raw/589238c3d48e654347d6cbc1e29c1e10dadc7cea/monoid.md";
+    const postSeed = [
+      Buffer.from("post"),
+      postRandomHash,
+    ];
+    const [postEditorAccount] = await anchor.web3.PublicKey.findProgramAddress(
+      postSeed,
+      program.programId
+    );
+    try {
+      const editor_tx = await program.methods
+        .createPostAsEditor(metadataUri, postRandomHash)
+        .accounts({
+          post: postEditorAccount,
+          hostProfile: hostProfileAccount,
+          editorProfile: editorUserProfileAccount,
+          editor: editorAccount,
+          authority: editorUser.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .transaction();
+      editor_tx.feePayer = editorUser.publicKey;
+      editor_tx.recentBlockhash = (await provider.connection.getLatestBlockhash())
+        .blockhash;
+      await editorUser_anchor_wallet.signTransaction(editor_tx);
+      await provider.sendAndConfirm(editor_tx, [editorUser]);
+    } catch (error) {
+      expect(error).to.be.an("error");
+      expect(error.toString()).to.contain("custom program error: 0x7d3");
+    }
+  });
+
   it("create post as editor", async () => {
     const postRandomHash = randombytes(32);
     const metadataUri =
@@ -317,6 +363,32 @@ describe("Editor", async () => {
     }
   });
 
+  it("should not allow unauthorized remove of editor", async () => {
+    const randomUser = anchor.web3.Keypair.generate();
+    const randomUser_anchor_wallet = new anchor.Wallet(randomUser);
+    await airdrop(randomUser.publicKey);
+
+    const randomUser_tx = await program.methods
+      .removeEditor()
+      .accounts({
+        editor: editorAccount,
+        hostProfile: hostProfileAccount,
+        editorProfile: editorProfileAccount,
+        authority: randomUser.publicKey,
+        systemProgram: SystemProgram.programId,
+      })
+      .transaction();
+    randomUser_tx.feePayer = randomUser.publicKey;
+    randomUser_tx.recentBlockhash = (await provider.connection.getLatestBlockhash())
+      .blockhash;
+    await randomUser_anchor_wallet.signTransaction(randomUser_tx);
+    try {
+      await provider.sendAndConfirm(randomUser_tx, [randomUser]);
+    } catch (error) {
+      expect(error).to.be.an("error");
+      expect(error.toString()).to.contain("custom program error: 0x7d1");
+    }
+  });
 
   it("remove editor", async () => {
     try {
