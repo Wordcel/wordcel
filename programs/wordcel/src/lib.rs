@@ -11,7 +11,7 @@ use instructions::*;
 use state::*;
 
 #[cfg(not(any(feature = "mainnet", feature = "devnet")))]
-declare_id!("v4enuof3drNvU2Y3b5m7K62hMq3QUP6qQSV2jjxAhkp");
+declare_id!("6bxpSrHAc9zoWHKLJX3sfudTarFaHZoKQbM2XsyjJpMF");
 
 #[cfg(feature = "devnet")]
 declare_id!("D9JJgeRf2rKq5LNMHLBMb92g4ZpeMgCyvZkd7QKwSCzg");
@@ -37,7 +37,7 @@ pub mod wordcel {
         metadata_uri: String,
         random_hash: [u8; 32],
     ) -> Result<()> {
-        require_gt!(metadata_uri.len(), MAX_LEN_URI, PostError::URITooLarge);
+        require!(metadata_uri.len() < MAX_LEN_URI, PostError::URITooLarge);
 
         let post = &mut ctx.accounts.post;
         post.random_hash = random_hash;
@@ -56,7 +56,7 @@ pub mod wordcel {
     }
 
     pub fn update_post(ctx: Context<UpdatePost>, metadata_uri: String) -> Result<()> {
-        require_gt!(metadata_uri.len(), MAX_LEN_URI, PostError::URITooLarge);
+        require!(metadata_uri.len() < MAX_LEN_URI, PostError::URITooLarge);
 
         let post = &mut ctx.accounts.post;
         post.metadata_uri = metadata_uri;
@@ -68,7 +68,7 @@ pub mod wordcel {
         metadata_uri: String,
         random_hash: [u8; 32],
     ) -> Result<()> {
-        require_gt!(metadata_uri.len(), MAX_LEN_URI, PostError::URITooLarge);
+        require!(metadata_uri.len() < MAX_LEN_URI, PostError::URITooLarge);
 
         let post = &mut ctx.accounts.post;
         post.random_hash = random_hash;
@@ -122,11 +122,27 @@ pub mod wordcel {
         Ok(())
     }
 
-    pub fn update_post_as_editor(ctx: Context<PostAsEditor>, metadata_uri: String) -> Result<()> {
-        require_gt!(metadata_uri.len(), MAX_LEN_URI, PostError::URITooLarge);
+
+    pub fn create_post_as_editor(ctx: Context<CreatePostAsEditor>, metadata_uri: String, random_hash: [u8; 32]) -> Result<()> {
+        require!(metadata_uri.len() < MAX_LEN_URI, PostError::URITooLarge);
 
         let post = &mut ctx.accounts.post;
+        post.random_hash = random_hash;
+        post.bump = *ctx.bumps.get("post").unwrap();
+        post.metadata_uri = metadata_uri;
         post.profile = *ctx.accounts.host_profile.to_account_info().key;
+        Ok(())
+    }
+
+    pub fn update_post_as_editor(ctx: Context<UpdatePostAsEditor>, metadata_uri: String) -> Result<()> {
+        require!(metadata_uri.len() < MAX_LEN_URI, PostError::URITooLarge);
+
+        let post = &mut ctx.accounts.post;
+        post.metadata_uri = metadata_uri;
+        Ok(())
+    }
+
+    pub fn delete_post_as_editor(_ctx: Context<DeletePostAsEditor>) -> Result<()> {
         Ok(())
     }
 }

@@ -12,8 +12,8 @@ const program = anchor.workspace.Wordcel as Program<Wordcel>;
 const user = provider.wallet.publicKey;
 
 describe("wordcel", async () => {
-  const randomHash = randombytes(32);
-  const profileSeed = [Buffer.from("profile"), randomHash];
+  const profileHash = randombytes(32);
+  const profileSeed = [Buffer.from("profile"), profileHash];
   const [profileAccount, _] = await anchor.web3.PublicKey.findProgramAddress(
     profileSeed,
     program.programId
@@ -23,30 +23,7 @@ describe("wordcel", async () => {
   describe("Profile", async () => {
     it("should initialize", async () => {
       await program.methods
-        .initialize(randomHash)
-        .accounts({
-          profile: profileAccount,
-          user: user,
-          systemProgram: SystemProgram.programId,
-        })
-        .rpc();
-      const data = await program.account.profile.fetch(profileAccount);
-      expect(data.authority.toString()).to.equal(user.toString());
-    });
-  });
-
-  describe("Editor", async () => {
-    before(async () => {
-      //set up profile 1
-      //set up profile 2
-      //set up Editor
-      //set up Post
-      //post as editor
-    });
-
-    it("should initialize", async () => {
-      await program.methods
-        .initialize(randomHash)
+        .initialize(profileHash)
         .accounts({
           profile: profileAccount,
           user: user,
