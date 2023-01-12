@@ -1,15 +1,14 @@
 import * as anchor from "@project-serum/anchor";
-import { Program, AnchorError } from "@project-serum/anchor";
+import { Program } from "@project-serum/anchor";
 import { Wordcel } from "../target/types/wordcel";
 import { expect } from "chai";
 import { PublicKey } from "@solana/web3.js";
 import randombytes from "randombytes";
-import { airdrop } from "./utils";
+import { airdrop, setupProfile } from "./utils";
 const { SystemProgram } = anchor.web3;
 const provider = anchor.getProvider();
 
 const program = anchor.workspace.Wordcel as Program<Wordcel>;
-const user = provider.wallet.publicKey;
 
 describe("Editor", async () => {
   const host = anchor.web3.Keypair.generate();
@@ -23,47 +22,21 @@ describe("Editor", async () => {
   let postAccount: PublicKey;
 
   before(async () => {
-    // Set up host profile
     await airdrop(host.publicKey);
-    const hostRandomHash = randombytes(32);
-    const hostProfileSeed = [Buffer.from("profile"), hostRandomHash];
-    [hostProfileAccount] = await anchor.web3.PublicKey.findProgramAddress(
-      hostProfileSeed,
-      program.programId
-    );
-    const host_profile_tx = await program.methods
-      .initialize(hostRandomHash)
-      .accounts({
-        profile: hostProfileAccount,
-        user: host.publicKey,
-        systemProgram: SystemProgram.programId,
-      })
-      .transaction();
-    host_profile_tx.feePayer = host.publicKey;
-    host_profile_tx.recentBlockhash = (await provider.connection.getLatestBlockhash())
-      .blockhash;
+    await airdrop(editor.publicKey);
+
+    // Set up host profile
+    const hostProfile = await setupProfile(host.publicKey, program);
+    hostProfileAccount = hostProfile.profileAccount;
+    const host_profile_tx = hostProfile.profileTx;
     await host_anchor_wallet.signTransaction(host_profile_tx);
     await provider.sendAndConfirm(host_profile_tx, [host]);
 
     // Set up editor profile
     await airdrop(editor.publicKey);
-    const editorRandomHash = randombytes(32);
-    const editorProfileSeed = [Buffer.from("profile"), editorRandomHash];
-    [editorProfileAccount] = await anchor.web3.PublicKey.findProgramAddress(
-      editorProfileSeed,
-      program.programId
-    );
-    const editor_profile_tx = await program.methods
-      .initialize(editorRandomHash)
-      .accounts({
-        profile: editorProfileAccount,
-        user: editor.publicKey,
-        systemProgram: SystemProgram.programId,
-      })
-      .transaction();
-    editor_profile_tx.feePayer = editor.publicKey;
-    editor_profile_tx.recentBlockhash = (await provider.connection.getLatestBlockhash())
-      .blockhash;
+    const editorProfile = await setupProfile(editor.publicKey, program);
+    editorProfileAccount = editorProfile.profileAccount;
+    const editor_profile_tx = editorProfile.profileTx;
     await editor_anchor_wallet.signTransaction(editor_profile_tx);
     await provider.sendAndConfirm(editor_profile_tx, [editor]);
   });
@@ -109,23 +82,11 @@ describe("Editor", async () => {
     const editorUser = anchor.web3.Keypair.generate();
     const editorUser_anchor_wallet = new anchor.Wallet(editorUser);
     await airdrop(editorUser.publicKey);
-    const editorRandomHash = randombytes(32);
-    const editorProfileSeed = [Buffer.from("profile"), editorRandomHash];
-    const [editorUserProfileAccount] = await anchor.web3.PublicKey.findProgramAddress(
-      editorProfileSeed,
-      program.programId
-    );
-    const editor_profile_tx = await program.methods
-      .initialize(editorRandomHash)
-      .accounts({
-        profile: editorUserProfileAccount,
-        user: editorUser.publicKey,
-        systemProgram: SystemProgram.programId,
-      })
-      .transaction();
-    editor_profile_tx.feePayer = editorUser.publicKey;
-    editor_profile_tx.recentBlockhash = (await provider.connection.getLatestBlockhash())
-      .blockhash;
+
+    // Set up editorUser profile
+    const editorUserProfile = await setupProfile(editorUser.publicKey, program);
+    const editorUserProfileAccount = editorUserProfile.profileAccount;
+    const editor_profile_tx = editorUserProfile.profileTx;
     await editorUser_anchor_wallet.signTransaction(editor_profile_tx);
     await provider.sendAndConfirm(editor_profile_tx, [editorUser]);
 
@@ -256,24 +217,10 @@ describe("Editor", async () => {
     const randomUser_anchor_wallet = new anchor.Wallet(randomUser);
     await airdrop(randomUser.publicKey);
 
-    // Set up user profile
-    const randomUserHash = randombytes(32);
-    const randomUserProfileSeed = [Buffer.from("profile"), randomUserHash];
-    const [randomUserProfileAccount] = await anchor.web3.PublicKey.findProgramAddress(
-      randomUserProfileSeed,
-      program.programId
-    );
-    const randomUser_profile_tx = await program.methods
-      .initialize(randomUserHash)
-      .accounts({
-        profile: randomUserProfileAccount,
-        user: randomUser.publicKey,
-        systemProgram: SystemProgram.programId,
-      })
-      .transaction();
-    randomUser_profile_tx.feePayer = randomUser.publicKey;
-    randomUser_profile_tx.recentBlockhash = (await provider.connection.getLatestBlockhash())
-      .blockhash;
+    // Set up randomUser profile
+    const randomUserPrfile = await setupProfile(randomUser.publicKey, program);
+    const randomUserProfileAccount = randomUserPrfile.profileAccount;
+    const randomUser_profile_tx = randomUserPrfile.profileTx;
     await randomUser_anchor_wallet.signTransaction(randomUser_profile_tx);
     await provider.sendAndConfirm(randomUser_profile_tx, [randomUser]);
 
@@ -316,27 +263,6 @@ describe("Editor", async () => {
     const randomUser = anchor.web3.Keypair.generate();
     const randomUser_anchor_wallet = new anchor.Wallet(randomUser);
     await airdrop(randomUser.publicKey);
-
-    // Set up user profile
-    const randomUserHash = randombytes(32);
-    const randomUserProfileSeed = [Buffer.from("profile"), randomUserHash];
-    const [randomUserProfileAccount] = await anchor.web3.PublicKey.findProgramAddress(
-      randomUserProfileSeed,
-      program.programId
-    );
-    const randomUser_profile_tx = await program.methods
-      .initialize(randomUserHash)
-      .accounts({
-        profile: randomUserProfileAccount,
-        user: randomUser.publicKey,
-        systemProgram: SystemProgram.programId,
-      })
-      .transaction();
-    randomUser_profile_tx.feePayer = randomUser.publicKey;
-    randomUser_profile_tx.recentBlockhash = (await provider.connection.getLatestBlockhash())
-      .blockhash;
-    await randomUser_anchor_wallet.signTransaction(randomUser_profile_tx);
-    await provider.sendAndConfirm(randomUser_profile_tx, [randomUser]);
 
     const randomUser_post_tx = await program.methods
       .deletePostAsEditor()
