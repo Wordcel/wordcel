@@ -91,6 +91,35 @@ pub struct UpdatePost<'info> {
 }
 
 #[derive(Accounts)]
+pub struct ClosePost<'info> {
+    #[account(
+        has_one = authority,
+        seeds = [
+            b"profile".as_ref(),
+            &profile.random_hash
+        ],
+        bump = profile.bump
+    )]
+    // Checks if the original profile was supplied and if the profile authority is the signer
+    pub profile: Account<'info, Profile>,
+    #[account(
+        mut,
+        has_one = profile,
+        seeds = [
+            b"post".as_ref(),
+            &post.random_hash
+        ],
+        bump = post.bump,
+        close = authority
+    )]
+    // Checks if a post was supplied and it is part of the supplied profile.
+    pub post: Account<'info, Post>,
+    #[account(mut)]
+    pub authority: Signer<'info>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
 #[instruction(metadata_uri: String, random_hash: [u8;32])]
 pub struct Comment<'info> {
     #[account(
