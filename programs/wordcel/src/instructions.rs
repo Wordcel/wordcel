@@ -1,6 +1,4 @@
 use crate::*;
-use invite::program::Invite as InvitationProgram;
-use invite::Invite;
 
 #[derive(Accounts)]
 #[instruction(random_hash: [u8;32])]
@@ -16,20 +14,9 @@ pub struct Initialize<'info> {
         space = Profile::LEN
     )]
     pub profile: Account<'info, Profile>,
-    #[account(
-        owner = invitation_program.key(),
-        seeds = [
-            Invite::PREFIX.as_bytes().as_ref(),
-            user.key().as_ref()
-        ],
-        seeds::program = invitation_program.key(),
-        bump = invitation.bump
-    )]
-    pub invitation: Account<'info, Invite>,
     #[account(mut)]
     pub user: Signer<'info>,
     pub system_program: Program<'info, System>,
-    pub invitation_program: Program<'info, InvitationProgram>,
 }
 
 #[derive(Accounts)]
