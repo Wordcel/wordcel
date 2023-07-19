@@ -6,3 +6,10 @@ target
 node_modules
 test_ledger/
 .goki/
+.env
+.editorconfig
+.solana/
+scripts/*
+sdk/*
+set_env
+scratch/*
