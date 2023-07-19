@@ -1,8 +1,11 @@
 [package]
 name = "wordcel"
 version = "2.0.0"
-description = "Created with Anchor"
 edition = "2018"
+license = "GPL-3.0-or-later"
+description = "Wordcel Legacy Program"
+repository = "https://github.com/Wordcel/wordcel"
+
 
 [lib]
 crate-type = ["cdylib", "lib"]
@@ -13,10 +16,6 @@ no-entrypoint = []
 no-idl = []
 no-log-ix-name = []
 cpi = ["no-entrypoint"]
-default = ["invite"]
-devnet = ["invite", "invite/devnet"]
-mainnet = ["invite", "invite/mainnet"]
 
 [dependencies]
 anchor-lang = "0.24.2"
-invite = { path = "../invite", features = ["cpi"], optional = true }
