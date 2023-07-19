@@ -1278,7 +1278,6 @@ name = "wordcel"
 version = "2.0.0"
 dependencies = [
  "anchor-lang",
- "invite",
 ]
 
 [[package]]
