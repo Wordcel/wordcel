@@ -8,8 +8,6 @@
     "build:invite:devnet": "anchor build -p invite --provider.cluster devnet -- --features devnet",
     "build:wordcel:devnet": "anchor build -p wordcel --provider.cluster devnet -- --features devnet",
     "build:all:devnet": "anchor build --provider.cluster devnet -- --features devnet",
-    "upgrade:invite:mainnet": "goki upgrade-local -l target/deploy/invite.so -p .solana/keys/mainnet/invite-keypair.json -u ~/.config/solana/wordcel_mainnet.json -c mainnet",
-    "upgrade:wordcel:mainnet": "goki upgrade-local -l target/deploy/wordcel.so -p .solana/keys/mainnet/wordcel-keypair.json -u ~/.config/solana/wordcel_mainnet.json -c mainnet",
     "upgrade:invite:devnet": "solana program deploy target/deploy/invite.so -u devnet --program-id .solana/keys/devnet/invite-keypair.json -k ~/.config/solana/wordcel_admin.json",
     "upgrade:wordcel:devnet": "solana program deploy target/deploy/wordcel.so -u devnet --program-id .solana/keys/devnet/wordcel-v0.1.0-keypair.json -k ~/.config/solana/wordcel_admin.json",
     "idl:upgrade:wordcel:mainnet": "anchor idl upgrade -f target/idl/wordcel.json --provider.cluster mainnet --provider.wallet ~/.config/solana/wordcel_mainnet.json EXzAYHZ8xS6QJ6xGRsdKZXixoQBLsuMbmwJozm85jHp",
