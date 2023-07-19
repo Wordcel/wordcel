@@ -16,6 +16,9 @@ no-entrypoint = []
 no-idl = []
 no-log-ix-name = []
 cpi = ["no-entrypoint"]
+default = []
+mainnet = []
+devnet = []
 
 [dependencies]
 anchor-lang = "0.24.2"
