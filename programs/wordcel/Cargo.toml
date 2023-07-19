@@ -1,6 +1,6 @@
 [package]
 name = "wordcel"
-version = "0.1.1"
+version = "2.0.0"
 description = "Created with Anchor"
 edition = "2018"
 
